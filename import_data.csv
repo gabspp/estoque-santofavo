@@ -1,0 +1,152 @@
+Produto	Grupo	Categoria	Unidade	Estoque Minimo
+Amido de Milho	1- Insumos	A - Farinhas e Amidos	kg	1
+Amido Modificado 	1- Insumos	A - Farinhas e Amidos	pct 500g	1
+Farinha de Trigo	1- Insumos	A - Farinhas e Amidos	kg	14
+Povilho Doce	1- Insumos	A - Farinhas e Amidos	kg	1
+Povilho Azedo	1- Insumos	A - Farinhas e Amidos	kg	0
+Açúcar Cristal	1- Insumos	B - Açúcares e Adoçantes	kg	19
+Açúcar de Confeiteiro	1- Insumos	B - Açúcares e Adoçantes	kg	0
+Açúcar Mascavo	1- Insumos	B - Açúcares e Adoçantes	kg	80
+Glucose	1- Insumos	B - Açúcares e Adoçantes	balde 5 kg	3
+Mel	1- Insumos	B - Açúcares e Adoçantes	galão 7,6	5
+Creme de Leite	1- Insumos	C - Laticínios e Derivados	un	23
+Doce de Leite	1- Insumos	C - Laticínios e Derivados	lt 5 kg	1
+Leite Café	1- Insumos	C - Laticínios e Derivados	un	13
+Leite Condensado	1- Insumos	C - Laticínios e Derivados	un	8
+Leite em pó	1- Insumos	C - Laticínios e Derivados	pct 400g	4
+Leite Integral Cozinha	1- Insumos	C - Laticínios e Derivados	un	11
+Cacau em Pó	1- Insumos	D - Chocolates e Derivados de Cacau	pct 500g	1
+Chocolate Amargo	1- Insumos	D - Chocolates e Derivados de Cacau	kg	0
+Chocolate ao Leite	1- Insumos	D - Chocolates e Derivados de Cacau	kg	18
+Chocolate Branco	1- Insumos	D - Chocolates e Derivados de Cacau	kg	0
+Chocolate Meio Amargo	1- Insumos	D - Chocolates e Derivados de Cacau	kg	58
+Manteiga de Cacau	1- Insumos	D - Chocolates e Derivados de Cacau	kg	18
+Nibs de Cacau	1- Insumos	D - Chocolates e Derivados de Cacau	pct 800g	2
+Liquor de Cacau	1-Insumos	D - Chocolates e Derivados de Cacau	kg	15
+Bicarbonato de Sódio	1- Insumos	E - Aditivos e Auxiliares	kg	1
+Cremor de Tártaro	1- Insumos	E - Aditivos e Auxiliares	pct 500g	0
+Desmoldante	1- Insumos	E - Aditivos e Auxiliares	un	3
+Fermento em Pó	1- Insumos	E - Aditivos e Auxiliares	kg	0
+Flor de Sal	1- Insumos	E - Aditivos e Auxiliares	kg	0
+Gelatina em pó	1- Insumos	E - Aditivos e Auxiliares	kg	0
+Lecitina de Soja	1- Insumos	E - Aditivos e Auxiliares	un	0
+Pectina Cítrica	1- Insumos	E - Aditivos e Auxiliares	pct 400g	0
+Sal Marinho	1- Insumos	E - Aditivos e Auxiliares	kg	0
+Óleo de Canola/Milho/Girassol	1- Insumos	F - Óleos e Gorduras	un	2
+Óleo de Coco	1- Insumos	F - Óleos e Gorduras	un	0
+Óleo de Palmiste	1- Insumos	F - Óleos e Gorduras	kg	1
+Baunilha	1- Insumos	G - Especiarias e Aromatizantes	kg	3
+Canela em Pau	1- Insumos	G - Especiarias e Aromatizantes	kg	0
+Canela em Pó	1- Insumos	G - Especiarias e Aromatizantes	kg	2
+Cravo em Pó	1- Insumos	G - Especiarias e Aromatizantes	kg	0
+Pimenta da Jamaica	1- Insumos	G - Especiarias e Aromatizantes	kg	0
+Semente de Cumaru	1- Insumos	G - Especiarias e Aromatizantes	un	0
+Amendoim	1- Insumos	H - Frutas Secas e Oleaginosas	kg	1
+Avelã	1- Insumos	H - Frutas Secas e Oleaginosas	kg	0
+Castanha de Caju 	1- Insumos	H - Frutas Secas e Oleaginosas	kg	1
+Damasco 	1- Insumos	H - Frutas Secas e Oleaginosas	kg	0
+Macadâmia	1- Insumos	H - Frutas Secas e Oleaginosas	kg	0
+Nozes	1- Insumos	H - Frutas Secas e Oleaginosas	kg	1
+Pistache	1-Insumos	H - Frutas Secas e Oleaginosas		0
+Água com gás	1- Insumos	I - Outros	un	38
+Água sem gás	1- Insumos	I - Outros	un	30
+Café Grão	1- Insumos	I - Outros	kg	5
+Manteiga de Amendoim	1- Insumos	I - Outros	un	0
+Sache Açúcar Cristal Café	1- Insumos	I - Outros	un	0
+Sache Açúcar Mascavo Café	1- Insumos	I - Outros	un	83
+Mate	1- Insumos	I - Outros	pct	1
+Creme de Leite Fresco	1- Insumos	J - Refrigerados	kg	6
+Framboesa Congelada	1- Insumos	J - Refrigerados	kg	1
+Laranja Baia	1- Insumos	J - Refrigerados	kg	1
+Laranja Pera	1- Insumos	J - Refrigerados	kg	2
+Laranja Seleta	1- Insumos	J - Refrigerados	kg	1
+Manteiga	1- Insumos	J - Refrigerados	kg	5
+Maracujá	1- Insumos	J - Refrigerados	kg	2
+Ovo	1- Insumos	J - Refrigerados	un	177
+Morango Congelado	1-Insumos	J - Refrigerados	kg	0
+Cream Cheese	1-Insumos	J - Refrigerados	kg	0
+Leite Vegetal	1-Insumos	I - Outros	un	0
+Insumos Extras	1-Insumos	I - Outros	bloco	200
+Papel Cajutella	2 - Embalagens	K - Papéis para PDM	bloco	0
+Papel Caramelo Salgado	2 - Embalagens	K - Papéis para PDM	bloco	0
+Papel Damasco	2 - Embalagens	K - Papéis para PDM	bloco	0
+Papel DLN	2 - Embalagens	K - Papéis para PDM	bloco	0
+Papel Laranja	2 - Embalagens	K - Papéis para PDM	bloco	0
+Papel Maracujá	2 - Embalagens	K - Papéis para PDM	bloco	0
+Papel Sem Recheio	2 - Embalagens	K - Papéis para PDM	bloco	0
+Papel Sem Sabor	2 - Embalagens	K - Papéis para PDM	bloco	0
+Base laminada bolo G	2 - Embalagens	L - Embalagens para Produtos	un	4
+Caixa bolo G	2 - Embalagens	L - Embalagens para Produtos	un	4
+Celofane PDM	2 - Embalagens	L - Embalagens para Produtos	bloco	0
+celomax Bala	2 - Embalagens	L - Embalagens para Produtos	bloco	0
+Embalagem Barrinha	2 - Embalagens	L - Embalagens para Produtos	un	92
+emabalgem bolo G mel	2 - Embalagens	L - Embalagens para Produtos	un	2
+Embalagem bolo P	2 - Embalagens	L - Embalagens para Produtos	un	6
+Embalagem crocante	2 - Embalagens	L - Embalagens para Produtos	un	50
+Embalagem Fatia Bolo (g635)	2 - Embalagens	L - Embalagens para Produtos	un	71
+Forma bolo mel	2 - Embalagens	L - Embalagens para Produtos	un	33
+Pote pdm	2 - Embalagens	L - Embalagens para Produtos	un	33
+Caixa 15 pães	2 - Embalagens	M - Caixas	un	0
+Caixa 3 pães	2 - Embalagens	M - Caixas	un	101
+Caixa 6 pães	2 - Embalagens	M - Caixas	un	50
+Caixa 9 pães	2 - Embalagens	M - Caixas	un	7
+Caixa sd/2	2 - Embalagens	M - Caixas	un	6
+Faixa caixa 3	2 - Embalagens	M - Caixas	un	0
+Faixa caixa 9	2 - Embalagens	M - Caixas	un	0
+Fita cetim cx 6	2 - Embalagens	M - Caixas	un	0
+Saco ifood	2 - Embalagens	N - Sacos e Sacolas	un	27
+Sacola Alça Fita	2 - Embalagens	N - Sacos e Sacolas	un	17
+Sacola kraft alça 12x8x18 cm P	2 - Embalagens	N - Sacos e Sacolas	un	150
+Sacola kraft alça 18x10,5x26cm G	2 - Embalagens	N - Sacos e Sacolas	un	15
+Saquinho 10x5,5x21	2 - Embalagens	N - Sacos e Sacolas	un	83
+Saquinho 13,5x6,3x25	2 - Embalagens	N - Sacos e Sacolas	un	100
+Corda amarela	2 - Embalagens	O - Cordas	rolo	0
+Corda azul marinho	2 - Embalagens	O - Cordas	rolo	0
+Corda bege	2 - Embalagens	O - Cordas	rolo	0
+Corda laranja	2 - Embalagens	O - Cordas	rolo	0
+Corda marrom	2 - Embalagens	O - Cordas	rolo	0
+Corda marrom claro	2 - Embalagens	O - Cordas	rolo	0
+Corda vermelha	2 - Embalagens	O - Cordas	rolo	0
+Etiqueta caixas	2 - Embalagens	OA - Etiquetas	rolo	0
+Etiqueta cajutella	2 - Embalagens	OA - Etiquetas	rolo	0
+Etiqueta caramelo salgado	2 - Embalagens	OA - Etiquetas	rolo	0
+Etiqueta crocante frente	2 - Embalagens	OA - Etiquetas	rolo	0
+Etiqueta crocante verso	2 - Embalagens	OA - Etiquetas	rolo	0
+Etiqueta doce de leite com nozes	2 - Embalagens	OA - Etiquetas	rolo	0
+Etiqueta FAB VAL	2 - Embalagens	OA - Etiquetas	un	0
+Etiqueta fechamento sacolas	2 - Embalagens	OA - Etiquetas	un	0
+Etiqueta laranja	2 - Embalagens	OA - Etiquetas	rolo	0
+Etiqueta maracujá	2 - Embalagens	OA - Etiquetas	rolo	0
+Etiqueta sem recheio	2 - Embalagens	OA - Etiquetas	rolo	0
+Embalagens Extras	2 - Embalagens		un	0
+Balança de cozinha	3- Material de Consumo	P - Utensílios de Produção	un	0
+Bobina Saco Picotado	3- Material de Consumo	P - Utensílios de Produção	un	0
+Filtro café v60	3- Material de Consumo	P - Utensílios de Produção	un	25
+Papel Para Assadeira	3- Material de Consumo	P - Utensílios de Produção	un	0
+Plástico Filme 300 m	3- Material de Consumo	P - Utensílios de Produção	un	1
+Papel higiênico	3- Material de Consumo	Q - Papel	rolo	1
+Papel interfolha	3- Material de Consumo	Q - Papel	un	2
+Papel kraft	3- Material de Consumo	Q - Papel	un	0
+Papel toalha	3- Material de Consumo	Q - Papel	un	3
+Saco de Confeitar	3- Material de Consumo	Q - Papel	un	14
+Colher descartável	3- Material de Consumo	R - Descartáveis	un	17
+Copo G	3- Material de Consumo	R - Descartáveis	un	17
+Copo G Água	3- Material de Consumo	R - Descartáveis	un	167
+Copo P	3- Material de Consumo	R - Descartáveis	un	13
+Guardanapo	3- Material de Consumo	R - Descartáveis	un	667
+Luva	3- Material de Consumo	R - Descartáveis	un	1
+Prato Descartável	3- Material de Consumo	R - Descartáveis	un	0
+Touca	3- Material de Consumo	R - Descartáveis	un	0
+Fita Dupla Face	4- Material de Apoio	S - Material de Escritório/Diversos	un	0
+Gilete	4- Material de Apoio	S - Material de Escritório/Diversos	un	0
+Água Sanitária / Cloro	4- Material de Apoio	I - Outros	un	1
+Álcool 70	4- Material de Apoio	T - Material de Limpeza	un	1
+Detergente 5L	4- Material de Apoio	T - Material de Limpeza	un	7
+Esponja	4- Material de Apoio	T - Material de Limpeza	un	2
+Limpa Alumínio	4- Material de Apoio	T - Material de Limpeza	un	0
+Refill mop	4- Material de Apoio	T - Material de Limpeza	un	0
+Rolo Perfex	4- Material de Apoio	T - Material de Limpeza	un	0
+Sabonete 5L	4- Material de Apoio	T - Material de Limpeza	un	0
+Saco De Lixo	4- Material de Apoio	T - Material de Limpeza	un	18
+Veja Multiuso	4- Material de Apoio	T - Material de Limpeza	un	0
+Material Extra	4- Material de Apoio		un	22
