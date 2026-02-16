@@ -1,28 +1,43 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Plus, Search, Pencil, Trash2, AlertCircle } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, AlertCircle, ArrowUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { productService } from "@/services/productService";
-import { type Product } from "@/types";
+import { categoryService } from "@/services/categoryService";
+import { useAuth } from "@/context/AuthContext";
+import { type Product, type Subcategory } from "@/types";
 import { cn } from "@/lib/utils";
 
+type SortField = 'name' | 'category' | 'subcategory';
+type SortOrder = 'asc' | 'desc';
+
 export default function ProductList() {
+  const { role } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
+  const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
 
+  // Sorting state
+  const [sortField, setSortField] = useState<SortField>('name');
+  const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
+
   useEffect(() => {
-    loadProducts();
+    loadData();
   }, []);
 
-  const loadProducts = async () => {
+  const loadData = async () => {
     try {
-      const data = await productService.getProducts();
-      setProducts(data);
+      const [productsData, subcategoriesData] = await Promise.all([
+        productService.getProducts(),
+        categoryService.getAllSubcategories()
+      ]);
+      setProducts(productsData);
+      setSubcategories(subcategoriesData);
     } catch (error) {
-      console.error("Error loading products:", error);
+      console.error("Error loading interactions:", error);
     } finally {
       setLoading(false);
     }
@@ -31,15 +46,51 @@ export default function ProductList() {
   const handleDelete = async (id: string) => {
     if (confirm("Tem certeza que deseja excluir este produto?")) {
       await productService.deleteProduct(id);
-      loadProducts();
+      loadData(); // Reload to refresh list
     }
   };
 
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortOrder('asc');
+    }
+  };
+
+  const getSubcategoryName = (id?: string) => {
+    if (!id) return "-";
+    return subcategories.find(s => s.id === id)?.name || "-";
+  };
+
+  // 1. Filter
   const filteredProducts = products.filter(
     (product) =>
       product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       product.barcode?.includes(searchTerm),
   );
+
+  // 2. Sort
+  const sortedProducts = [...filteredProducts].sort((a, b) => {
+    let valA = "";
+    let valB = "";
+
+    if (sortField === 'name') {
+      valA = a.name.toLowerCase();
+      valB = b.name.toLowerCase();
+    } else if (sortField === 'category') {
+      valA = a.category.toLowerCase();
+      valB = b.category.toLowerCase();
+    } else if (sortField === 'subcategory') {
+      valA = getSubcategoryName(a.subcategory_id).toLowerCase();
+      valB = getSubcategoryName(b.subcategory_id).toLowerCase();
+    }
+
+    if (valA < valB) return sortOrder === 'asc' ? -1 : 1;
+    if (valA > valB) return sortOrder === 'asc' ? 1 : -1;
+    return 0;
+  });
 
   return (
     <div className="space-y-6">
@@ -48,12 +99,15 @@ export default function ProductList() {
           <h1 className="text-2xl font-bold text-brand-brown">Produtos</h1>
           <p className="text-gray-500">Gerencie o catálogo de produtos</p>
         </div>
-        <Link to="/produtos/novo">
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            Novo Produto
-          </Button>
-        </Link>
+
+        {role === 'admin' && (
+          <Link to="/produtos/novo">
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              Novo Produto
+            </Button>
+          </Link>
+        )}
       </div>
 
       <div className="relative">
@@ -71,34 +125,50 @@ export default function ProductList() {
           <table className="w-full text-sm text-left">
             <thead className="bg-gray-50 text-gray-700 font-medium border-b border-gray-100">
               <tr>
-                <th className="px-6 py-4">Produto</th>
-                <th className="px-6 py-4">Categoria</th>
+                <th className="px-6 py-4 cursor-pointer hover:bg-gray-100" onClick={() => handleSort('name')}>
+                  <div className="flex items-center gap-1">
+                    Produto
+                    <ArrowUpDown className="h-3 w-3 text-gray-400" />
+                  </div>
+                </th>
+                <th className="px-6 py-4 cursor-pointer hover:bg-gray-100" onClick={() => handleSort('category')}>
+                  <div className="flex items-center gap-1">
+                    Categoria
+                    <ArrowUpDown className="h-3 w-3 text-gray-400" />
+                  </div>
+                </th>
+                <th className="px-6 py-4 cursor-pointer hover:bg-gray-100" onClick={() => handleSort('subcategory')}>
+                  <div className="flex items-center gap-1">
+                    Subcategoria
+                    <ArrowUpDown className="h-3 w-3 text-gray-400" />
+                  </div>
+                </th>
                 <th className="px-6 py-4">Unidade</th>
                 <th className="px-6 py-4 text-center">Estoque</th>
-                <th className="px-6 py-4 text-right">Ações</th>
+                {role === 'admin' && <th className="px-6 py-4 text-right">Ações</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {loading ? (
                 <tr>
                   <td
-                    colSpan={5}
+                    colSpan={role === 'admin' ? 6 : 5}
                     className="px-6 py-8 text-center text-gray-500"
                   >
                     Carregando produtos...
                   </td>
                 </tr>
-              ) : filteredProducts.length === 0 ? (
+              ) : sortedProducts.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={5}
+                    colSpan={role === 'admin' ? 6 : 5}
                     className="px-6 py-8 text-center text-gray-500"
                   >
                     Nenhum produto encontrado.
                   </td>
                 </tr>
               ) : (
-                filteredProducts.map((product) => (
+                sortedProducts.map((product) => (
                   <tr
                     key={product.id}
                     className="hover:bg-gray-50/50 transition-colors"
@@ -117,6 +187,9 @@ export default function ProductList() {
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
                         {product.category}
                       </span>
+                    </td>
+                    <td className="px-6 py-4 text-gray-600">
+                      {getSubcategoryName(product.subcategory_id)}
                     </td>
                     <td className="px-6 py-4 text-gray-600">{product.unit}</td>
                     <td className="px-6 py-4 text-center">
@@ -139,27 +212,29 @@ export default function ProductList() {
                         )}
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <Link to={`/produtos/${product.id}`}>
+                    {role === 'admin' && (
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <Link to={`/produtos/${product.id}`}>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                          </Link>
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                            className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                            onClick={() => handleDelete(product.id)}
                           >
-                            <Pencil className="h-4 w-4" />
+                            <Trash2 className="h-4 w-4" />
                           </Button>
-                        </Link>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
-                          onClick={() => handleDelete(product.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </td>
+                        </div>
+                      </td>
+                    )}
                   </tr>
                 ))
               )}

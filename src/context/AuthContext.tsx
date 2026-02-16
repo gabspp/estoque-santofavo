@@ -10,7 +10,6 @@ type AuthContextType = {
   role: UserRole | null;
   loading: boolean;
   signOut: () => Promise<void>;
-  signInDemo: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -58,7 +57,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (error) {
         console.error('Error fetching profile:', error);
-        // Fallback or handle error (maybe create profile if missing?)
       } else {
         setProfile(data);
       }
@@ -70,56 +68,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOut = async () => {
-    if (user?.email === "demo@santofavo.com") {
-      setSession(null);
-      setUser(null);
-      setProfile(null);
-      return;
-    }
     await supabase.auth.signOut();
     setProfile(null);
   };
 
-  const signInDemo = async () => {
-    const demoUser = {
-      id: "demo-user-id",
-      aud: "authenticated",
-      role: "authenticated",
-      email: "demo@santofavo.com",
-      email_confirmed_at: new Date().toISOString(),
-      phone: "",
-      confirmed_at: new Date().toISOString(),
-      last_sign_in_at: new Date().toISOString(),
-      app_metadata: { provider: "email", providers: ["email"] },
-      user_metadata: {},
-      identities: [],
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    } as User;
-
-    const demoSession = {
-      access_token: "demo-token",
-      token_type: "bearer",
-      expires_in: 3600,
-      refresh_token: "demo-refresh-token",
-      user: demoUser,
-    } as Session;
-
-    const demoProfile: UserProfile = {
-      id: "demo-user-id",
-      email: "demo@santofavo.com",
-      role: "admin",
-      created_at: new Date().toISOString()
-    };
-
-    setSession(demoSession);
-    setUser(demoUser);
-    setProfile(demoProfile);
-  };
-
   return (
     <AuthContext.Provider
-      value={{ session, user, profile, role: profile?.role ?? null, loading, signOut, signInDemo }}
+      value={{ session, user, profile, role: profile?.role ?? null, loading, signOut }}
     >
       {children}
     </AuthContext.Provider>

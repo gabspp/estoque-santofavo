@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { countingService } from "@/services/countingService";
 import { productService } from "@/services/productService";
-import { type StockCount, type StockCountItem, type Product } from "@/types";
+import { categoryService } from "@/services/categoryService";
+import { type StockCount, type StockCountItem, type Product, type Subcategory } from "@/types";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -18,12 +19,13 @@ export default function CountingArea() {
   const [count, setCount] = useState<StockCount | null>(null);
   const [items, setItems] = useState<StockCountItem[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
+  const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
   // Filter states
   const [searchTerm, setSearchTerm] = useState("");
-  const [activeCategory, setActiveCategory] = useState<string>("Todos");
+  const [activeSubcategory, setActiveSubcategory] = useState<string>("Todos");
 
   useEffect(() => {
     if (id) loadData(id);
@@ -31,9 +33,10 @@ export default function CountingArea() {
 
   const loadData = async (countId: string) => {
     try {
-      const [countData, productsData] = await Promise.all([
+      const [countData, productsData, subcategoriesData] = await Promise.all([
         countingService.getCountById(countId),
         productService.getProducts(),
+        categoryService.getAllSubcategories()
       ]);
 
       if (!countData) {
@@ -58,6 +61,7 @@ export default function CountingArea() {
       setCount(countData);
       productsData.sort((a, b) => a.name.localeCompare(b.name)); // Sort alphabetically
       setProducts(productsData);
+      setSubcategories(subcategoriesData);
       setItems(initialItems);
     } catch (error) {
       console.error("Error loading data:", error);
@@ -73,12 +77,12 @@ export default function CountingArea() {
 
   const handleQuantityChange = (productId: string, qty: string) => {
     const value = parseFloat(qty);
-    if (isNaN(value)) return;
+    if (isNaN(value) && qty !== "") return; // Allow empty string for backspace
 
     setItems((prev) =>
       prev.map((item) =>
         item.product_id === productId
-          ? { ...item, quantity_counted: value }
+          ? { ...item, quantity_counted: isNaN(value) ? 0 : value } // Handle empty as 0 or keep as is? Usually 0.
           : item,
       ),
     );
@@ -140,9 +144,17 @@ export default function CountingArea() {
   };
 
   // Filter Logic
-  const categories = [
-    "Todos",
-    ...Array.from(new Set(products.map((p) => p.category))),
+  // Get all Subcategories present in the product list + "Todos"
+  const availableSubcategoryIds = Array.from(new Set(products.map(p => p.subcategory_id).filter(Boolean))) as string[];
+
+  const availableSubcategories = availableSubcategoryIds
+    .map(id => subcategories.find(s => s.id === id))
+    .filter((s): s is Subcategory => !!s)
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  const filterTabs = [
+    { id: "Todos", name: "Todos" },
+    ...availableSubcategories.map(s => ({ id: s.id, name: s.name }))
   ];
 
   const filteredItems = items.filter((item) => {
@@ -152,10 +164,11 @@ export default function CountingArea() {
     const matchesSearch =
       product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (product.barcode && product.barcode.includes(searchTerm));
-    const matchesCategory =
-      activeCategory === "Todos" || product.category === activeCategory;
 
-    return matchesSearch && matchesCategory;
+    const matchesSubcategory =
+      activeSubcategory === "Todos" || product.subcategory_id === activeSubcategory;
+
+    return matchesSearch && matchesSubcategory;
   });
 
   if (loading)
@@ -200,18 +213,18 @@ export default function CountingArea() {
           </div>
 
           <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
-            {categories.map((cat) => (
+            {filterTabs.map((tab) => (
               <button
-                key={cat}
-                onClick={() => setActiveCategory(cat)}
+                key={tab.id}
+                onClick={() => setActiveSubcategory(tab.id)}
                 className={cn(
                   "px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors",
-                  activeCategory === cat
+                  activeSubcategory === tab.id
                     ? "bg-brand-brown text-white shadow-md"
                     : "bg-gray-100 text-gray-600 hover:bg-gray-200",
                 )}
               >
-                {cat}
+                {tab.name}
               </button>
             ))}
           </div>
@@ -233,13 +246,9 @@ export default function CountingArea() {
                   {product.name}
                 </div>
                 <div className="text-sm text-gray-500">
-                  {product.unit} • {product.category}
+                  {/* Simplified: No category/subcategory, just unit */}
+                  {product.unit}
                 </div>
-                {product.barcode && (
-                  <div className="text-xs text-gray-400 font-mono mt-0.5">
-                    {product.barcode}
-                  </div>
-                )}
               </div>
               <div className="w-24 shrink-0">
                 <Input

@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,7 +11,7 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
-  const { signInDemo } = useAuth();
+
 
   // Redirect if already logged in (optional, usually handled by route guards but good for UX)
   // useEffect(() => {
@@ -92,27 +91,6 @@ export default function Login() {
             isLoading={loading}
           >
             Entrar
-          </Button>
-
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t border-gray-300" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-white px-2 text-gray-500">Ou</span>
-            </div>
-          </div>
-
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full text-brand-brown border-brand-brown hover:bg-brand-yellow/10"
-            onClick={() => {
-              signInDemo();
-              navigate("/");
-            }}
-          >
-            Modo Demo (Desenvolvimento)
           </Button>
         </form>
       </div>
