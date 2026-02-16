@@ -13,7 +13,9 @@ import ApprovalDetail from "@/pages/approval/ApprovalDetail";
 import WeeklyProcessing from "@/pages/reports/WeeklyProcessing";
 import ShoppingList from "@/pages/reports/ShoppingList";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import { AdminRoute } from "@/components/AdminRoute";
 import Layout from "@/components/layout/Layout";
+import UserManagement from "@/pages/settings/UserManagement";
 
 import { ToastProvider } from "@/components/ui/use-toast";
 
@@ -22,24 +24,32 @@ function App() {
     <ToastProvider>
       <AuthProvider>
         <BrowserRouter>
+          {/* Main App Routes */}
           <Routes>
             <Route path="/login" element={<Login />} />
 
             <Route element={<ProtectedRoute />}>
               <Route element={<Layout />}>
                 <Route path="/" element={<Dashboard />} />
+
+                {/* Public Access (Employees & Admins) */}
                 <Route path="/produtos" element={<ProductList />} />
-                <Route path="/produtos/novo" element={<ProductForm />} />
-                <Route path="/produtos/:id" element={<ProductForm />} />
                 <Route path="/entradas" element={<EntryList />} />
                 <Route path="/entradas/nova" element={<EntryForm />} />
                 <Route path="/contagem" element={<CountingDashboard />} />
                 <Route path="/contagem/:id" element={<CountingArea />} />
-                <Route path="/aprovacao" element={<ApprovalList />} />
-                <Route path="/aprovacao/:id" element={<ApprovalDetail />} />
-                <Route path="/processamento" element={<WeeklyProcessing />} />
                 <Route path="/relatorios/compras" element={<ShoppingList />} />
-                {/* Add other protected routes here */}
+
+                {/* Admin Only Routes */}
+                <Route element={<AdminRoute />}>
+                  <Route path="/produtos/novo" element={<ProductForm />} />
+                  <Route path="/produtos/:id" element={<ProductForm />} />
+                  <Route path="/aprovacao" element={<ApprovalList />} />
+                  <Route path="/aprovacao/:id" element={<ApprovalDetail />} />
+                  <Route path="/processamento" element={<WeeklyProcessing />} />
+                  <Route path="/usuarios" element={<UserManagement />} />
+                </Route>
+
               </Route>
             </Route>
 

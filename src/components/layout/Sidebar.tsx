@@ -7,6 +7,7 @@ import {
   FileCheck,
   Settings,
   ShoppingCart,
+  Users,
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -20,19 +21,22 @@ interface SidebarProps {
 
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const location = useLocation();
-  const { user } = useAuth();
+  const { user, role } = useAuth();
 
-  // Gestor sees everything, Funcionario sees only specific items
-  // For now, showing all to everyone, will filter later based on role
   const navigation = [
-    { name: "Dashboard", href: "/", icon: LayoutDashboard },
-    { name: "Produtos", href: "/produtos", icon: Package },
-    { name: "Entradas", href: "/entradas", icon: ArrowDownToLine },
-    { name: "Contagem", href: "/contagem", icon: ClipboardCheck },
-    { name: "Aprovação", href: "/aprovacao", icon: FileCheck },
-    { name: "Processamento", href: "/processamento", icon: Settings },
-    { name: "Lista de Compras", href: "/compras", icon: ShoppingCart },
+    { name: "Dashboard", href: "/", icon: LayoutDashboard, roles: ['admin', 'employee'] },
+    { name: "Produtos", href: "/produtos", icon: Package, roles: ['admin', 'employee'] },
+    { name: "Entradas", href: "/entradas", icon: ArrowDownToLine, roles: ['admin', 'employee'] },
+    { name: "Contagem", href: "/contagem", icon: ClipboardCheck, roles: ['admin', 'employee'] },
+    { name: "Aprovação", href: "/aprovacao", icon: FileCheck, roles: ['admin'] },
+    { name: "Processamento", href: "/processamento", icon: Settings, roles: ['admin'] },
+    { name: "Lista de Compras", href: "/relatorios/compras", icon: ShoppingCart, roles: ['admin'] },
+    { name: "Usuários", href: "/usuarios", icon: Users, roles: ['admin'] }, // Using Users icon which matches imports? Need to check imports
   ];
+
+  const filteredNavigation = navigation.filter(item =>
+    role && item.roles.includes(role)
+  );
 
   return (
     <>
@@ -64,7 +68,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         </div>
 
         <div className="flex flex-col gap-1 p-4">
-          {navigation.map((item) => {
+          {filteredNavigation.map((item) => {
             const Icon = item.icon;
             const isActive = location.pathname === item.href;
 

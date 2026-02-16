@@ -1,6 +1,15 @@
 // export type Unit = 'UN' | 'KG' | 'LT' | 'CX' // Keeping as string for now if imported data has various units
 export type Unit = string;
 
+export type UserRole = 'admin' | 'employee';
+
+export interface UserProfile {
+  id: string;
+  email: string;
+  role: UserRole;
+  created_at: string;
+}
+
 export interface Category {
   id: string;
   name: string;
