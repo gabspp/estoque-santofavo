@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Plus, Search, ArrowUpRight } from "lucide-react";
+import { Plus, Search, ArrowUpRight, Upload } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
@@ -54,12 +54,20 @@ export default function EntryList() {
             Registre novas compras e visualize o histórico
           </p>
         </div>
-        <Link to="/entradas/nova">
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            Nova Entrada
-          </Button>
-        </Link>
+        <div className="flex gap-2">
+          <Link to="/entradas/importar">
+            <Button variant="outline">
+              <Upload className="h-4 w-4 mr-2" />
+              Importar CSV
+            </Button>
+          </Link>
+          <Link to="/entradas/nova">
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              Nova Entrada
+            </Button>
+          </Link>
+        </div>
       </div>
 
       <div className="relative">

@@ -29,15 +29,23 @@ export default function CountingDashboard() {
     }
   };
 
-  const handleNewCount = async () => {
+  const handleDelete = async (id: string) => {
+    if (!confirm("Tem certeza que deseja excluir este rascunho?")) return;
+
     try {
-      const newCount = await countingService.createCount();
-      navigate(`/contagem/${newCount.id}`);
+      await countingService.deleteCount(id);
+      setCounts((prev) => prev.filter((c) => c.id !== id));
     } catch (error) {
-      console.error("Error creating count:", error);
-      alert("Erro ao iniciar nova contagem");
+      console.error("Error deleting count:", error);
+      alert("Erro ao excluir contagem");
     }
   };
+
+  const handleNewCount = () => {
+    navigate("/contagem/nova");
+  };
+
+  // Function moved up to resolve lint error
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -148,11 +156,21 @@ export default function CountingDashboard() {
                       </span>
 
                       {count.status === "draft" && (
-                        <Link to={`/contagem/${count.id}`}>
-                          <Button size="sm" variant="outline" className="h-8">
-                            Continuar
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-8 text-red-500 hover:text-red-700 hover:bg-red-50"
+                            onClick={() => handleDelete(count.id)}
+                          >
+                            Excluir
                           </Button>
-                        </Link>
+                          <Link to={`/contagem/${count.id}`}>
+                            <Button size="sm" variant="outline" className="h-8">
+                              Continuar
+                            </Button>
+                          </Link>
+                        </div>
                       )}
                       {count.status === "pending_review" && (
                         <span className="text-xs text-gray-500 flex items-center gap-1">

@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { countingService } from "@/services/countingService";
 import { productService } from "@/services/productService";
 import { categoryService } from "@/services/categoryService";
+import { storeService } from "@/services/storeService";
 import { type StockCount, type StockCountItem, type Product, type Subcategory } from "@/types";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/components/ui/use-toast";
@@ -26,6 +27,7 @@ export default function CountingArea() {
   // Filter states
   const [searchTerm, setSearchTerm] = useState("");
   const [activeSubcategory, setActiveSubcategory] = useState<string>("Todos");
+  const [storeName, setStoreName] = useState<string>("");
 
   useEffect(() => {
     if (id) loadData(id);
@@ -46,6 +48,15 @@ export default function CountingArea() {
         });
         navigate("/contagem");
         return;
+      }
+
+      if (countData.store_id) {
+        try {
+          const store = await storeService.getById(countData.store_id);
+          if (store) setStoreName(store.name);
+        } catch (e) {
+          console.error("Error fetching store:", e);
+        }
       }
 
       // Initialize items if empty (first load)
@@ -185,7 +196,7 @@ export default function CountingArea() {
             <ArrowLeft className="h-6 w-6" />
           </Link>
           <div className="text-center">
-            <div className="text-sm text-gray-500">Contagem</div>
+            <div className="text-sm text-gray-500">Contagem {storeName && ` - ${storeName}`}</div>
             <div className="font-bold text-lg">#{id?.substring(0, 6)}</div>
           </div>
           <div

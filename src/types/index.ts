@@ -57,8 +57,21 @@ export interface StockCountItem {
   quantity_system: number; // Snapshot of system stock at time of count
 }
 
+export interface Store {
+  id: string;
+  name: string;
+  code: string;
+}
+
+export interface InventoryLevel {
+  product_id: string;
+  store_id: string;
+  quantity: number;
+}
+
 export interface StockCount {
   id: string;
+  store_id?: string; // Optional for migration of old counts, but should be required for new ones
   date: string;
   status: StockCountStatus;
   items: StockCountItem[];

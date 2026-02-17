@@ -130,18 +130,57 @@ export const productService = {
   },
 
   // Helper for approval flow
-  updateStockFromCount: async (
+  updateStockForStore: async (
     productId: string,
+    storeId: string,
     newQuantity: number,
   ): Promise<void> => {
-    const { error } = await supabase
+    console.log(`Updating stock for Product ${productId}, Store ${storeId}, Qty ${newQuantity}`);
+
+    // 1. Update Inventory Level for specific store
+    const { error: inventoryError } = await supabase
+      .from("inventory_levels")
+      .upsert(
+        {
+          product_id: productId,
+          store_id: storeId,
+          quantity: newQuantity,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "product_id,store_id" },
+      );
+
+    if (inventoryError) {
+      console.error("Error updating inventory level:", inventoryError);
+      throw inventoryError;
+    }
+
+    // 2. Calculate new total stock
+    const { data: levels, error: sumError } = await supabase
+      .from("inventory_levels")
+      .select("quantity")
+      .eq("product_id", productId);
+
+    if (sumError) {
+      console.error("Error calculating total stock:", sumError);
+      throw sumError;
+    }
+
+    const totalStock = levels.reduce((sum, item) => sum + item.quantity, 0);
+    console.log(`New total stock for ${productId}: ${totalStock}`);
+
+    // 3. Update Product Total Stock
+    const { error: updateError } = await supabase
       .from("products")
       .update({
-        current_stock: newQuantity,
+        current_stock: totalStock,
         updated_at: new Date().toISOString(),
       })
       .eq("id", productId);
 
-    if (error) throw error;
+    if (updateError) {
+      console.error("Error updating product total:", updateError);
+      throw updateError;
+    }
   },
 };

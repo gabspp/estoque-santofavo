@@ -24,11 +24,12 @@ export const countingService = {
     return data;
   },
 
-  createCount: async (): Promise<StockCount> => {
+  createCount: async (storeId: string): Promise<StockCount> => {
     // 1. Create the Count Header
     const { data: count, error: countError } = await supabase
       .from("stock_counts")
       .insert({
+        store_id: storeId,
         date: new Date().toISOString(),
         status: "draft",
       })
@@ -43,7 +44,7 @@ export const countingService = {
       count_id: count.id,
       product_id: p.id,
       quantity_counted: 0,
-      quantity_system: p.current_stock,
+      quantity_system: p.current_stock, // Note: This might need to be store-specific stock in future, but for now we snapshot global
     }));
 
     // 3. Insert Items
@@ -106,10 +107,17 @@ export const countingService = {
 
     // 2. Update actual stock for each item
     for (const item of count.items) {
-      await productService.updateStockFromCount(
-        item.product_id,
-        item.quantity_counted,
-      );
+      if (count.store_id) {
+        await productService.updateStockForStore(
+          item.product_id,
+          count.store_id,
+          item.quantity_counted
+        );
+      } else {
+        // Fallback for legacy counts without store_id (if any, though we are migrating)
+        // Or throw error
+        console.warn("Approving count without store_id:", count.id);
+      }
     }
 
     // 3. Update status
@@ -133,6 +141,11 @@ export const countingService = {
       })
       .eq("id", id);
 
+    if (error) throw error;
+  },
+
+  deleteCount: async (id: string): Promise<void> => {
+    const { error } = await supabase.from("stock_counts").delete().eq("id", id);
     if (error) throw error;
   },
 

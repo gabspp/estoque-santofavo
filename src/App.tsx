@@ -7,12 +7,14 @@ import ProductForm from "@/pages/products/ProductForm";
 import EntryList from "@/pages/entries/EntryList";
 import EntryForm from "@/pages/entries/EntryForm";
 import CountingDashboard from "@/pages/counting/CountingDashboard";
+import StoreSelection from "@/pages/counting/StoreSelection";
 import CountingArea from "@/pages/counting/CountingArea";
 import ApprovalList from "@/pages/approval/ApprovalList";
 import ApprovalDetail from "@/pages/approval/ApprovalDetail";
 import WeeklyProcessing from "@/pages/reports/WeeklyProcessing";
 import ShoppingList from "@/pages/reports/ShoppingList";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import EntryImport from "@/pages/entries/EntryImport";
 import { AdminRoute } from "@/components/AdminRoute";
 import Layout from "@/components/layout/Layout";
 import UserManagement from "@/pages/settings/UserManagement";
@@ -36,7 +38,9 @@ function App() {
                 <Route path="/produtos" element={<ProductList />} />
                 <Route path="/entradas" element={<EntryList />} />
                 <Route path="/entradas/nova" element={<EntryForm />} />
+                <Route path="/entradas/importar" element={<EntryImport />} />
                 <Route path="/contagem" element={<CountingDashboard />} />
+                <Route path="/contagem/nova" element={<StoreSelection />} />
                 <Route path="/contagem/:id" element={<CountingArea />} />
                 <Route path="/relatorios/compras" element={<ShoppingList />} />
 
