@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { ArrowLeft, Save, Send, Search } from "lucide-react";
+import { ArrowLeft, Save, Send, Search, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -26,8 +26,22 @@ export default function CountingArea() {
 
   // Filter states
   const [searchTerm, setSearchTerm] = useState("");
-  const [activeSubcategory, setActiveSubcategory] = useState<string>("Todos");
+  const [activeSubcategory, setActiveSubcategory] = useState<string>("");
   const [storeName, setStoreName] = useState<string>("");
+
+  // UI States
+  const [localInputs, setLocalInputs] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      toast({
+        title: "Lembrete",
+        description: "Lembre-se de salvar o rascunho periodicamente para não perder seu progresso.",
+      });
+    }, 10 * 60 * 1000); // 10 minutes
+
+    return () => clearInterval(interval);
+  }, [toast]);
 
   useEffect(() => {
     if (id) loadData(id);
@@ -79,6 +93,27 @@ export default function CountingArea() {
       setProducts(activeProductsData);
       setSubcategories(subcategoriesData);
       setItems(initialItems);
+
+      const inputsMap: Record<string, string> = {};
+      initialItems.forEach(i => {
+        inputsMap[i.product_id] = i.quantity_counted === 0 ? "" : i.quantity_counted.toString();
+      });
+      setLocalInputs(inputsMap);
+
+      // Setup initial category gracefully
+      if (activeProductsData.length > 0) {
+        // Collect current subcategories
+        const subIds = Array.from(new Set(activeProductsData.map(p => p.subcategory_id).filter(Boolean))) as string[];
+        if (subIds.length > 0) {
+          // Find first alphabetically
+          const firstCat = subcategoriesData.find(s => s.id === subIds[0]);
+          if (firstCat) setActiveSubcategory(firstCat.id);
+        } else {
+          setActiveSubcategory("Todos");
+        }
+      } else {
+        setActiveSubcategory("Todos");
+      }
     } catch (error) {
       console.error("Error loading data:", error);
       toast({
@@ -92,13 +127,13 @@ export default function CountingArea() {
   };
 
   const handleQuantityChange = (productId: string, qty: string) => {
+    setLocalInputs(prev => ({ ...prev, [productId]: qty }));
     const value = parseFloat(qty);
-    if (isNaN(value) && qty !== "") return; // Allow empty string for backspace
 
     setItems((prev) =>
       prev.map((item) =>
         item.product_id === productId
-          ? { ...item, quantity_counted: isNaN(value) ? 0 : value } // Handle empty as 0 or keep as is? Usually 0.
+          ? { ...item, quantity_counted: isNaN(value) ? 0 : value }
           : item,
       ),
     );
@@ -169,9 +204,21 @@ export default function CountingArea() {
     .sort((a, b) => a.name.localeCompare(b.name));
 
   const filterTabs = [
-    { id: "Todos", name: "Todos" },
-    ...availableSubcategories.map(s => ({ id: s.id, name: s.name }))
+    ...availableSubcategories.map(s => ({ id: s.id, name: s.name })),
+    { id: "Todos", name: "Todos" }
   ];
+
+  const currentActiveSubcat = activeSubcategory || "Todos";
+
+  const handlePrevTab = () => {
+    const idx = filterTabs.findIndex(t => t.id === currentActiveSubcat);
+    if (idx > 0) setActiveSubcategory(filterTabs[idx - 1].id);
+  };
+
+  const handleNextTab = () => {
+    const idx = filterTabs.findIndex(t => t.id === currentActiveSubcat);
+    if (idx < filterTabs.length - 1) setActiveSubcategory(filterTabs[idx + 1].id);
+  };
 
   const filteredItems = items.filter((item) => {
     const product = products.find((p) => p.id === item.product_id);
@@ -182,7 +229,7 @@ export default function CountingArea() {
       (product.barcode && product.barcode.includes(searchTerm));
 
     const matchesSubcategory =
-      activeSubcategory === "Todos" || product.subcategory_id === activeSubcategory;
+      currentActiveSubcat === "Todos" || product.subcategory_id === currentActiveSubcat;
 
     return matchesSearch && matchesSubcategory;
   });
@@ -228,32 +275,49 @@ export default function CountingArea() {
             />
           </div>
 
-          <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
-            {filterTabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveSubcategory(tab.id)}
-                className={cn(
-                  "px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors",
-                  activeSubcategory === tab.id
-                    ? "bg-brand-brown text-white shadow-md"
-                    : "bg-gray-100 text-gray-600 hover:bg-gray-200",
-                )}
-              >
-                {tab.name}
-              </button>
-            ))}
+          <div className="flex items-center gap-1">
+            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 shrink-0 text-gray-500 mb-2" onClick={handlePrevTab}>
+              <ChevronLeft className="h-5 w-5" />
+            </Button>
+
+            <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar flex-1 scroll-smooth">
+              {filterTabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveSubcategory(tab.id)}
+                  className={cn(
+                    "px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors",
+                    currentActiveSubcat === tab.id
+                      ? "bg-brand-brown text-white shadow-md"
+                      : "bg-gray-100 text-gray-600 hover:bg-gray-200",
+                  )}
+                >
+                  {tab.name}
+                </button>
+              ))}
+            </div>
+
+            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 shrink-0 text-gray-500 mb-2" onClick={handleNextTab}>
+              <ChevronRight className="h-5 w-5" />
+            </Button>
           </div>
         </div>
       </div>
       {/* Items List */}
       <div className="grid grid-cols-1 gap-4">
-        {filteredItems.map((item) => {
+        {filteredItems.map((item, index) => {
           const product = products.find((p) => p.id === item.product_id);
           if (!product) return null;
 
           return (
-            <Card key={item.product_id} className="p-4 flex items-center gap-4">
+            <Card
+              key={item.product_id}
+              className="p-4 flex items-center gap-4 cursor-pointer hover:bg-gray-50 transition-colors"
+              onClick={() => {
+                const input = document.querySelector(`input[data-index="${index}"]`) as HTMLInputElement;
+                if (input) input.focus();
+              }}
+            >
               <div className="h-12 w-12 bg-gray-100 rounded-md flex items-center justify-center shrink-0 font-bold text-gray-400 text-lg">
                 {product.name.charAt(0)}
               </div>
@@ -266,17 +330,37 @@ export default function CountingArea() {
                   {product.unit}
                 </div>
               </div>
-              <div className="w-24 shrink-0">
+              <div className="w-24 shrink-0" onClick={(e) => e.stopPropagation()}>
                 <Input
                   type="number"
                   inputMode="decimal"
                   className="text-center font-lg h-12"
                   placeholder="0"
-                  value={item.quantity_counted}
+                  data-index={index}
+                  value={localInputs[item.product_id] ?? ""}
                   onChange={(e) =>
                     handleQuantityChange(item.product_id, e.target.value)
                   }
-                  onFocus={(e) => e.target.select()}
+                  onFocus={(e) => {
+                    // Try to auto-select text for easier replacement, but ensure cursor works
+                    e.target.select();
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      const nextInput = document.querySelector(`input[data-index="${index + 1}"]`) as HTMLInputElement;
+                      if (nextInput) {
+                        nextInput.focus();
+                      } else {
+                        // Move to next categor/tab if at end
+                        handleNextTab();
+                        setTimeout(() => {
+                          const firstInput = document.querySelector(`input[data-index="0"]`) as HTMLInputElement;
+                          if (firstInput) firstInput.focus();
+                        }, 150);
+                      }
+                    }
+                  }}
                 />
               </div>
             </Card>
