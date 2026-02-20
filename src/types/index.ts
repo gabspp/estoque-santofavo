@@ -34,13 +34,13 @@ export interface Product {
   last_cost?: number;
   average_cost?: number;
   updated_at: string;
+  inventory?: { [storeId: string]: number };
 }
 
 export interface StockEntry {
   id: string;
   product_id: string;
   quantity: number;
-  cost_price: number;
   cost_price: number;
   total_cost: number;
   store_id?: string;
