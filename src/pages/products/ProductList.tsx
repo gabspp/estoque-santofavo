@@ -7,7 +7,8 @@ import { Card } from "@/components/ui/card";
 import { productService } from "@/services/productService";
 import { categoryService } from "@/services/categoryService";
 import { useAuth } from "@/context/AuthContext";
-import { type Product, type Subcategory } from "@/types";
+import { type Product, type Subcategory, type Store } from "@/types";
+import { storeService } from "@/services/storeService";
 import { cn } from "@/lib/utils";
 
 type SortField = 'name' | 'category' | 'subcategory';
@@ -24,20 +25,24 @@ export default function ProductList() {
   const [sortField, setSortField] = useState<SortField>('name');
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
 
+  const [stores, setStores] = useState<Store[]>([]);
+
   useEffect(() => {
     loadData();
   }, []);
 
   const loadData = async () => {
     try {
-      const [productsData, subcategoriesData] = await Promise.all([
+      const [productsData, subcategoriesData, storesData] = await Promise.all([
         productService.getProducts(),
-        categoryService.getAllSubcategories()
+        categoryService.getAllSubcategories(),
+        storeService.getAll()
       ]);
       setProducts(productsData);
       setSubcategories(subcategoriesData);
+      setStores(storesData);
     } catch (error) {
-      console.error("Error loading interactions:", error);
+      console.error("Error loading data:", error);
     } finally {
       setLoading(false);
     }
@@ -144,7 +149,14 @@ export default function ProductList() {
                   </div>
                 </th>
                 <th className="px-6 py-4">Unidade</th>
-                <th className="px-6 py-4 text-center">Estoque</th>
+                <th className="px-6 py-4 text-center">Total</th>
+
+                {stores.map(store => (
+                  <th key={store.id} className="px-6 py-4 text-center text-xs uppercase tracking-wider">
+                    {store.name}
+                  </th>
+                ))}
+
                 {role === 'admin' && <th className="px-6 py-4 text-right">Ações</th>}
               </tr>
             </thead>
@@ -212,6 +224,15 @@ export default function ProductList() {
                         )}
                       </div>
                     </td>
+
+                    {
+                      stores.map(store => (
+                        <td key={store.id} className="px-6 py-4 text-center text-gray-600">
+                          {product.inventory?.[store.id] ?? 0}
+                        </td>
+                      ))
+                    }
+
                     {role === 'admin' && (
                       <td className="px-6 py-4 text-right">
                         <div className="flex items-center justify-end gap-2">
@@ -241,7 +262,7 @@ export default function ProductList() {
             </tbody>
           </table>
         </div>
-      </Card>
-    </div>
+      </Card >
+    </div >
   );
 }

@@ -41,7 +41,9 @@ export interface StockEntry {
   product_id: string;
   quantity: number;
   cost_price: number;
+  cost_price: number;
   total_cost: number;
+  store_id?: string;
   created_at: string;
 }
 

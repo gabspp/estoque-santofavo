@@ -9,10 +9,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { productService } from "@/services/productService";
-import { type Product } from "@/types";
+import { storeService } from "@/services/storeService";
+import { type Product, type Store } from "@/types";
 
 const entrySchema = z.object({
   product_id: z.string().min(1, "Selecione um produto"),
+  store_id: z.string().min(1, "Selecione uma loja"),
   quantity: z.number().min(0.001, "Quantidade deve ser maior que zero"),
   cost_price: z.number().min(0, "Preço deve ser positivo"),
 });
@@ -23,6 +25,7 @@ export default function EntryForm() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
+  const [stores, setStores] = useState<Store[]>([]);
 
   const {
     register,
@@ -42,15 +45,19 @@ export default function EntryForm() {
   const totalCost = (quantity || 0) * (costPrice || 0);
 
   useEffect(() => {
-    loadProducts();
+    loadData();
   }, []);
 
-  const loadProducts = async () => {
+  const loadData = async () => {
     try {
-      const data = await productService.getProducts();
-      setProducts(data);
+      const [productsData, storesData] = await Promise.all([
+        productService.getProducts(),
+        storeService.getAll()
+      ]);
+      setProducts(productsData);
+      setStores(storesData);
     } catch (error) {
-      console.error("Error loading products:", error);
+      console.error("Error loading data:", error);
     }
   };
 
@@ -66,6 +73,7 @@ export default function EntryForm() {
     try {
       await productService.addStockEntry({
         product_id: data.product_id,
+        store_id: data.store_id,
         quantity: data.quantity,
         cost_price: data.cost_price,
       });
@@ -110,14 +118,34 @@ export default function EntryForm() {
                     <option value="">Selecione um produto...</option>
                     {products.map((product) => (
                       <option key={product.id} value={product.id}>
-                        {product.name} ({product.unit}) - Atual:{" "}
-                        {product.current_stock}
+                        {product.name} ({product.unit}) - Total: {product.current_stock}
                       </option>
                     ))}
                   </select>
                   {errors.product_id && (
                     <p className="text-xs text-red-500 mt-1">
                       {errors.product_id.message}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <Label htmlFor="store_id">Loja Destino</Label>
+                  <select
+                    id="store_id"
+                    {...register("store_id")}
+                    className="flex h-10 w-full rounded-md border border-gray-300 bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-yellow focus-visible:ring-offset-2"
+                  >
+                    <option value="">Selecione uma loja...</option>
+                    {stores.map((store) => (
+                      <option key={store.id} value={store.id}>
+                        {store.name}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.store_id && (
+                    <p className="text-xs text-red-500 mt-1">
+                      {errors.store_id.message}
                     </p>
                   )}
                 </div>

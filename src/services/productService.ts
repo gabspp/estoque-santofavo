@@ -3,13 +3,37 @@ import { type Product, type StockEntry } from "@/types";
 
 export const productService = {
   getProducts: async (): Promise<Product[]> => {
-    const { data, error } = await supabase
+    // 1. Fetch products
+    const { data: products, error: productsError } = await supabase
       .from("products")
       .select("*")
       .order("name");
 
-    if (error) throw error;
-    return data || [];
+    if (productsError) throw productsError;
+
+    // 2. Fetch inventory levels
+    const { data: inventory, error: inventoryError } = await supabase
+      .from("inventory_levels")
+      .select("*");
+
+    if (inventoryError) throw inventoryError;
+
+    // 3. Map inventory to products
+    const productsWithInventory = products.map((product) => {
+      const productInventory = inventory.filter((i) => i.product_id === product.id);
+      const inventoryMap: { [storeId: string]: number } = {};
+
+      productInventory.forEach((item) => {
+        inventoryMap[item.store_id] = item.quantity;
+      });
+
+      return {
+        ...product,
+        inventory: inventoryMap,
+      };
+    });
+
+    return productsWithInventory || [];
   },
 
   getProductById: async (id: string): Promise<Product | undefined> => {
@@ -71,6 +95,10 @@ export const productService = {
   addStockEntry: async (
     entry: Omit<StockEntry, "id" | "created_at" | "total_cost">,
   ): Promise<StockEntry> => {
+    if (!entry.store_id) {
+      throw new Error("Store ID is required for stock entry");
+    }
+
     // 1. Get current product state
     const { data: product, error: fetchError } = await supabase
       .from("products")
@@ -82,7 +110,8 @@ export const productService = {
 
     const totalCost = entry.quantity * entry.cost_price;
 
-    // 2. Calculate new average cost
+    // 2. Calculate new average cost (Global/Consolidated)
+    // Note: We update the global average cost even if entry is for a specific store
     const currentTotalValue =
       product.current_stock * (product.average_cost || 0);
     const newTotalValue = currentTotalValue + totalCost;
@@ -90,11 +119,15 @@ export const productService = {
     const newAverageCost =
       newStock > 0 ? newTotalValue / newStock : entry.cost_price;
 
-    // 3. Update Product
+    // 3. Update Product (Consolidated)
+    // Note: detailed inventory update happens via inventory_levels, but we update total here too
+    // Ideally this should be a trigger or careful transaction, but we'll do app-side for now
     const { error: updateError } = await supabase
       .from("products")
       .update({
-        current_stock: newStock,
+        // current_stock will be updated by updateStockForStore via helper calculation, 
+        // BUT we need to save the average cost.
+        // Let's rely on updateStockForStore to set the final stock quantity to be safe.
         average_cost: newAverageCost,
         last_cost: entry.cost_price,
         updated_at: new Date().toISOString(),
@@ -108,6 +141,7 @@ export const productService = {
       .from("stock_entries")
       .insert({
         product_id: entry.product_id,
+        store_id: entry.store_id,
         quantity: entry.quantity,
         cost_price: entry.cost_price,
         total_cost: totalCost,
@@ -116,6 +150,20 @@ export const productService = {
       .single();
 
     if (insertError) throw insertError;
+
+    // 5. Update Specific Store Inventory
+    // First get current quantity for that store
+    const { data: currentLevel } = await supabase.from('inventory_levels')
+      .select('quantity')
+      .eq('product_id', entry.product_id)
+      .eq('store_id', entry.store_id)
+      .single();
+
+    const currentStoreQty = currentLevel?.quantity || 0;
+    const newStoreQty = currentStoreQty + entry.quantity;
+
+    await productService.updateStockForStore(entry.product_id, entry.store_id, newStoreQty);
+
     return newEntry;
   },
 

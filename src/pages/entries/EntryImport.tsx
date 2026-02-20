@@ -15,7 +15,8 @@ import {
 } from "@/components/ui/table";
 // Select removed
 import { productService } from "@/services/productService";
-import { type Product } from "@/types";
+import { storeService } from "@/services/storeService";
+import { type Product, type Store } from "@/types";
 import { cn } from "@/lib/utils";
 
 interface ImportedRow {
@@ -31,20 +32,26 @@ interface ImportedRow {
 export default function EntryImport() {
     const navigate = useNavigate();
     const [products, setProducts] = useState<Product[]>([]);
+    const [stores, setStores] = useState<Store[]>([]);
+    const [selectedStore, setSelectedStore] = useState<string>("");
     const [importedRows, setImportedRows] = useState<ImportedRow[]>([]);
     const [loading, setLoading] = useState(false);
     const [step, setStep] = useState<"upload" | "review">("upload");
 
     useEffect(() => {
-        loadProducts();
+        loadData();
     }, []);
 
-    const loadProducts = async () => {
+    const loadData = async () => {
         try {
-            const data = await productService.getProducts();
-            setProducts(data);
+            const [productsData, storesData] = await Promise.all([
+                productService.getProducts(),
+                storeService.getAll()
+            ]);
+            setProducts(productsData);
+            setStores(storesData);
         } catch (error) {
-            console.error("Error loading products:", error);
+            console.error("Error loading data:", error);
         }
     };
 
@@ -150,6 +157,7 @@ export default function EntryImport() {
             try {
                 await productService.addStockEntry({
                     product_id: row.mappedProductId,
+                    store_id: selectedStore,
                     quantity: row.quantity,
                     cost_price: row.cost,
                     // total_cost and dates are handled by service/DB
@@ -185,7 +193,7 @@ export default function EntryImport() {
 
             {step === "upload" && (
                 <Card className="min-h-[300px] flex flex-col items-center justify-center border-dashed border-2">
-                    <div className="text-center space-y-4">
+                    <div className="text-center space-y-4 w-full max-w-md px-4">
                         <div className="bg-brand-cream p-4 rounded-full inline-block">
                             <Upload className="h-8 w-8 text-brand-brown" />
                         </div>
@@ -195,12 +203,31 @@ export default function EntryImport() {
                                 O arquivo deve ter as colunas: nome, quantidade, custo
                             </p>
                         </div>
+
+                        <div className="w-full max-w-xs mx-auto text-left space-y-1">
+                            <label className="text-sm font-medium text-gray-700">Loja de Destino</label>
+                            <select
+                                className="flex h-10 w-full rounded-md border border-gray-300 bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-yellow focus-visible:ring-offset-2"
+                                value={selectedStore}
+                                onChange={(e) => setSelectedStore(e.target.value)}
+                            >
+                                <option value="">Selecione a loja...</option>
+                                {stores.map(store => (
+                                    <option key={store.id} value={store.id}>{store.name}</option>
+                                ))}
+                            </select>
+                        </div>
+
                         <Input
                             type="file"
                             accept=".csv"
                             className="max-w-xs mx-auto"
                             onChange={handleFileUpload}
+                            disabled={!selectedStore}
                         />
+                        {!selectedStore && (
+                            <p className="text-xs text-amber-600">Selecione uma loja para habilitar o upload.</p>
+                        )}
                     </div>
                 </Card>
             )}
