@@ -1,15 +1,8 @@
-import { Package, AlertTriangle, FileClock, Clock } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
-import { useDashboardStats } from "@/hooks/useDashboardStats";
-import { StatCard } from "@/components/dashboard/StatCard";
 import { ActionButtons } from "@/components/dashboard/ActionButtons";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const stats = useDashboardStats();
-
   const userName = user?.email?.split("@")[0] || "Gestor";
 
   return (
@@ -22,45 +15,6 @@ export default function Dashboard() {
         <p className="text-gray-500">
           Bem-vindo ao painel de controle do Santo Favo.
         </p>
-      </div>
-
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard
-          title="Total Produtos"
-          value={stats.loading ? "..." : stats.totalProducts}
-          icon={Package}
-          color="blue"
-        />
-        <StatCard
-          title="Estoque Baixo"
-          value={stats.loading ? "..." : stats.lowStock}
-          icon={AlertTriangle}
-          color={stats.lowStock > 0 ? "red" : "green"}
-          description="Produtos abaixo do mínimo"
-        />
-        <StatCard
-          title="Contagens Pendentes"
-          value={stats.loading ? "..." : stats.pendingCounts}
-          icon={FileClock}
-          color={stats.pendingCounts > 0 ? "yellow" : "default"}
-          description="Aguardando aprovação"
-        />
-        <StatCard
-          title="Última Atualização"
-          value={
-            stats.loading || !stats.lastUpdate
-              ? "..."
-              : format(stats.lastUpdate, "HH:mm")
-          }
-          icon={Clock}
-          color="default"
-          description={
-            stats.loading || !stats.lastUpdate
-              ? ""
-              : format(stats.lastUpdate, "dd/MM/yyyy", { locale: ptBR })
-          }
-        />
       </div>
 
       {/* Quick Actions */}

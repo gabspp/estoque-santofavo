@@ -51,8 +51,8 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       {/* Sidebar */}
       <div
         className={cn(
-          "fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transition-transform duration-200 md:translate-x-0 md:static md:h-screen",
-          isOpen ? "translate-x-0" : "-translate-x-full",
+          "fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transition-transform duration-200 md:sticky md:top-0 md:h-screen md:overflow-y-auto",
+          isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0",
         )}
       >
         <div className="flex h-16 items-center justify-between px-6 border-b border-gray-100">

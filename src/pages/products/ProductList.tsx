@@ -20,9 +20,10 @@ export default function ProductList() {
   const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [editMode, setEditMode] = useState(false);
 
   // Sorting state
-  const [sortField, setSortField] = useState<SortField>('name');
+  const [sortField, setSortField] = useState<SortField>('subcategory');
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
 
   const [stores, setStores] = useState<Store[]>([]);
@@ -52,6 +53,29 @@ export default function ProductList() {
     if (confirm("Tem certeza que deseja excluir este produto?")) {
       await productService.deleteProduct(id);
       loadData(); // Reload to refresh list
+    }
+  };
+
+  const handleToggleStoreStatus = async (productId: string, storeId: string, currentStatus: boolean) => {
+    try {
+      const newStatus = !currentStatus;
+      // Optimistic update
+      setProducts(products.map(p => {
+        if (p.id === productId) {
+          return {
+            ...p,
+            active_status: {
+              ...(p.active_status || {}),
+              [storeId]: newStatus
+            }
+          }
+        }
+        return p;
+      }));
+      await productService.toggleProductStoreActive(productId, storeId, newStatus);
+    } catch (e) {
+      console.error("Erro ao alterar status da loja", e);
+      loadData(); // Revert on fail
     }
   };
 
@@ -106,12 +130,22 @@ export default function ProductList() {
         </div>
 
         {role === 'admin' && (
-          <Link to="/produtos/novo">
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Novo Produto
+          <div className="flex gap-2">
+            <Button
+              variant={editMode ? "primary" : "outline"}
+              onClick={() => setEditMode(!editMode)}
+              className={editMode ? "bg-brand-brown" : ""}
+            >
+              <Pencil className="h-4 w-4 mr-2" />
+              {editMode ? "Concluir Edição" : "Edição Rápida"}
             </Button>
-          </Link>
+            <Link to="/produtos/novo">
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                Novo Produto
+              </Button>
+            </Link>
+          </div>
         )}
       </div>
 
@@ -226,11 +260,34 @@ export default function ProductList() {
                     </td>
 
                     {
-                      stores.map(store => (
-                        <td key={store.id} className="px-6 py-4 text-center text-gray-600">
-                          {product.inventory?.[store.id] ?? 0}
-                        </td>
-                      ))
+                      stores.map(store => {
+                        const isActive = product.active_status?.[store.id] !== false;
+
+                        return (
+                          <td key={store.id} className="px-6 py-4 text-center text-gray-600">
+                            {editMode && role === 'admin' ? (
+                              <button
+                                onClick={() => handleToggleStoreStatus(product.id, store.id, isActive)}
+                                className={cn(
+                                  "w-10 h-5 rounded-full relative transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-brand-brown focus:ring-offset-1 mx-auto block",
+                                  isActive ? "bg-brand-brown" : "bg-gray-200"
+                                )}
+                              >
+                                <span
+                                  className={cn(
+                                    "inline-block w-3 h-3 bg-white rounded-full transition-transform duration-200 ease-in-out absolute top-1",
+                                    isActive ? "translate-x-[22px] left-0" : "translate-x-1 left-0"
+                                  )}
+                                />
+                              </button>
+                            ) : (
+                              <span className={cn(!isActive && "text-gray-300 line-through")}>
+                                {product.inventory?.[store.id] ?? 0}
+                              </span>
+                            )}
+                          </td>
+                        );
+                      })
                     }
 
                     {role === 'admin' && (

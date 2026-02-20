@@ -22,14 +22,17 @@ export const productService = {
     const productsWithInventory = products.map((product) => {
       const productInventory = inventory.filter((i) => i.product_id === product.id);
       const inventoryMap: { [storeId: string]: number } = {};
+      const activeMap: { [storeId: string]: boolean } = {};
 
       productInventory.forEach((item) => {
         inventoryMap[item.store_id] = item.quantity;
+        activeMap[item.store_id] = item.is_active === undefined ? true : item.is_active;
       });
 
       return {
         ...product,
         inventory: inventoryMap,
+        active_status: activeMap,
       };
     });
 
@@ -89,6 +92,30 @@ export const productService = {
     const { error } = await supabase.from("products").delete().eq("id", id);
 
     if (error) throw error;
+  },
+
+  toggleProductStoreActive: async (productId: string, storeId: string, isActive: boolean): Promise<void> => {
+    const { data: existing, error: err } = await supabase
+      .from('inventory_levels')
+      .select('id')
+      .eq('product_id', productId)
+      .eq('store_id', storeId)
+      .maybeSingle();
+
+    if (err) throw err;
+
+    if (existing) {
+      const { error } = await supabase.from('inventory_levels').update({ is_active: isActive }).eq('id', existing.id);
+      if (error) throw error;
+    } else {
+      const { error } = await supabase.from('inventory_levels').insert({
+        product_id: productId,
+        store_id: storeId,
+        is_active: isActive,
+        quantity: 0
+      });
+      if (error) throw error;
+    }
   },
 
   // Stock Entry Methods

@@ -7,13 +7,14 @@ export default function Layout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex bg-gray-50 min-h-screen">
       <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
-      <div className="flex flex-1 flex-col overflow-hidden">
+      {/* Main Content Scrollable Area */}
+      <div className="flex flex-1 flex-col w-full">
         <Header onMenuClick={() => setIsSidebarOpen(true)} />
 
-        <main className="flex-1 overflow-y-auto p-4 md:p-6">
+        <main className="flex-1 p-4 md:p-6 mb-16 md:mb-0">
           <Outlet />
         </main>
       </div>

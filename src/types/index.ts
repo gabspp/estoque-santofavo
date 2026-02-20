@@ -35,6 +35,7 @@ export interface Product {
   average_cost?: number;
   updated_at: string;
   inventory?: { [storeId: string]: number };
+  active_status?: { [storeId: string]: boolean };
 }
 
 export interface StockEntry {
@@ -69,6 +70,7 @@ export interface InventoryLevel {
   product_id: string;
   store_id: string;
   quantity: number;
+  is_active?: boolean;
 }
 
 export interface StockCount {

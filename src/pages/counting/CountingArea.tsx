@@ -71,7 +71,12 @@ export default function CountingArea() {
 
       setCount(countData);
       productsData.sort((a, b) => a.name.localeCompare(b.name)); // Sort alphabetically
-      setProducts(productsData);
+
+      const activeProductsData = countData.store_id
+        ? productsData.filter(p => p.active_status?.[countData.store_id!] !== false)
+        : productsData;
+
+      setProducts(activeProductsData);
       setSubcategories(subcategoriesData);
       setItems(initialItems);
     } catch (error) {

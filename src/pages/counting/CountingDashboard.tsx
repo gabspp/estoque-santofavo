@@ -30,7 +30,7 @@ export default function CountingDashboard() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Tem certeza que deseja excluir este rascunho?")) return;
+    if (!confirm("Tem certeza que deseja excluir esta contagem?")) return;
 
     try {
       await countingService.deleteCount(id);
@@ -177,6 +177,16 @@ export default function CountingDashboard() {
                           <Clock className="h-3 w-3" /> Aguardando gerente
                         </span>
                       )}
+                      {(count.status === "approved" || count.status === "rejected") && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-8 text-red-500 hover:text-red-700 hover:bg-red-50"
+                          onClick={() => handleDelete(count.id)}
+                        >
+                          Excluir
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </Card>
@@ -193,8 +203,7 @@ export default function CountingDashboard() {
               Importante
             </h3>
             <p className="text-sm text-blue-700 leading-relaxed">
-              Realize a contagem preferencialmente com a loja fechada ou em
-              horários de pouco movimento para garantir a precisão dos dados.
+              Realizar as contagens aos sábados e preferencialmente perto do fim do expediente.
             </p>
           </Card>
 
@@ -209,7 +218,7 @@ export default function CountingDashboard() {
               </li>
               <li className="flex gap-2">
                 <CheckCircle className="h-4 w-4 text-green-500 shrink-0" />
-                <span>Conte por seções (ex: Matinais, Bebidas).</span>
+                <span>Conte por seções (ex: refletindo as subcategorias atuais do sistema).</span>
               </li>
               <li className="flex gap-2">
                 <CheckCircle className="h-4 w-4 text-green-500 shrink-0" />
