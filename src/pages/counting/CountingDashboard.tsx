@@ -1,17 +1,20 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Plus, Clock, CheckCircle, AlertCircle, Calendar } from "lucide-react";
+import { Plus, Clock, CheckCircle, AlertCircle, Calendar, Download } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { countingService } from "@/services/countingService";
+import { storeService } from "@/services/storeService";
+import { productService } from "@/services/productService";
 import { type StockCount } from "@/types";
 import { cn } from "@/lib/utils";
 
 export default function CountingDashboard() {
   const navigate = useNavigate();
   const [counts, setCounts] = useState<StockCount[]>([]);
+  const [stores, setStores] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -20,7 +23,15 @@ export default function CountingDashboard() {
 
   const loadCounts = async () => {
     try {
-      const data = await countingService.getCounts();
+      const [data, storesData] = await Promise.all([
+        countingService.getCounts(),
+        storeService.getAll(),
+      ]);
+      const storesMap: Record<string, string> = {};
+      storesData.forEach((s) => {
+        storesMap[s.id] = s.name;
+      });
+      setStores(storesMap);
       setCounts(data);
     } catch (error) {
       console.error("Error loading counts:", error);
@@ -43,6 +54,38 @@ export default function CountingDashboard() {
 
   const handleNewCount = () => {
     navigate("/contagem/nova");
+  };
+
+  const handleExportCSV = async (count: StockCount) => {
+    try {
+      const storeName = count.store_id ? (stores[count.store_id] || "Loja") : "Geral";
+      const products = await productService.getProducts();
+
+      const csvContent = [
+        ["Produto", "Quantidade Contada", "Quantidade Sistema", "Diferença"],
+        ...count.items.map((item) => {
+          const product = products.find((p) => p.id === item.product_id);
+          const name = product ? product.name : "Produto Desconhecido";
+          const diff = item.quantity_counted - item.quantity_system;
+          return `"${name}",${item.quantity_counted},${item.quantity_system},${diff}`;
+        }),
+      ].join("\n");
+
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute(
+        "download",
+        `Contagem_${storeName.replace(/\s+/g, "_")}_${count.id.substring(0, 6)}.csv`
+      );
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error("Erro ao exportar CSV:", error);
+      alert("Erro ao exportar CSV");
+    }
   };
 
   // Function moved up to resolve lint error
@@ -128,8 +171,13 @@ export default function CountingDashboard() {
                         <Calendar className="h-4 w-4 text-brand-brown" />
                       </div>
                       <div>
-                        <div className="font-medium text-gray-900">
+                        <div className="font-medium text-gray-900 flex items-center gap-2">
                           Contagem #{count.id.substring(0, 6)}
+                          {count.store_id && stores[count.store_id] && (
+                            <span className="text-sm font-normal text-gray-500">
+                              - {stores[count.store_id]}
+                            </span>
+                          )}
                         </div>
                         <div className="text-xs text-gray-500 mt-1">
                           Iniciada em{" "}
@@ -178,14 +226,25 @@ export default function CountingDashboard() {
                         </span>
                       )}
                       {(count.status === "approved" || count.status === "rejected") && (
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="h-8 text-red-500 hover:text-red-700 hover:bg-red-50"
-                          onClick={() => handleDelete(count.id)}
-                        >
-                          Excluir
-                        </Button>
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-8"
+                            onClick={() => handleExportCSV(count)}
+                            title="Baixar CSV"
+                          >
+                            <Download className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-8 text-red-500 hover:text-red-700 hover:bg-red-50"
+                            onClick={() => handleDelete(count.id)}
+                          >
+                            Excluir
+                          </Button>
+                        </div>
                       )}
                     </div>
                   </div>

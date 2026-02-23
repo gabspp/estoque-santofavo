@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { ArrowLeft, CheckCircle, XCircle, AlertTriangle } from "lucide-react";
+import { ArrowLeft, CheckCircle, XCircle, AlertTriangle, Download } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { countingService } from "@/services/countingService";
 import { productService } from "@/services/productService";
+import { storeService } from "@/services/storeService";
 import { type StockCount, type Product } from "@/types";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/components/ui/use-toast";
@@ -18,6 +19,7 @@ export default function ApprovalDetail() {
 
   const [count, setCount] = useState<StockCount | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
+  const [storeName, setStoreName] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
 
@@ -36,6 +38,15 @@ export default function ApprovalDetail() {
         toast({ title: "Contagem não encontrada", variant: "destructive" });
         navigate("/aprovacao");
         return;
+      }
+
+      if (countData.store_id) {
+        try {
+          const store = await storeService.getById(countData.store_id);
+          if (store) setStoreName(store.name);
+        } catch (e) {
+          console.error("Error fetching store:", e);
+        }
       }
 
       setCount(countData);
@@ -101,6 +112,37 @@ export default function ApprovalDetail() {
     return products.find((p) => p.id === id)?.name || "Produto Desconhecido";
   };
 
+  const handleExportCSV = () => {
+    if (!count) return;
+    try {
+      const nameStore = storeName || "Geral";
+      const csvContent = [
+        ["Produto", "Quantidade Contada", "Quantidade Sistema", "Diferença"],
+        ...count.items.map((item) => {
+          const product = products.find((p) => p.id === item.product_id);
+          const name = product ? product.name : "Produto Desconhecido";
+          const diff = item.quantity_counted - item.quantity_system;
+          return `"${name}",${item.quantity_counted},${item.quantity_system},${diff}`;
+        }),
+      ].join("\n");
+
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute(
+        "download",
+        `Revisao_${nameStore.replace(/\s+/g, "_")}_${count.id.substring(0, 6)}.csv`
+      );
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error("Erro ao exportar CSV:", error);
+      toast({ title: "Erro ao exportar CSV", variant: "destructive" });
+    }
+  };
+
   if (loading || !count)
     return <div className="p-8 text-center">Carregando detalhes...</div>;
 
@@ -118,6 +160,7 @@ export default function ApprovalDetail() {
           <div>
             <h1 className="text-2xl font-bold text-brand-brown">
               Revisão Contagem #{count.id.substring(0, 6)}
+              {storeName && ` - ${storeName}`}
             </h1>
             <p className="text-gray-500">
               Realizada em{" "}
@@ -127,23 +170,32 @@ export default function ApprovalDetail() {
             </p>
           </div>
         </div>
-        <div className="flex gap-3">
+        <div className="flex flex-wrap items-center justify-end gap-3 mt-4 sm:mt-0">
+          <Button
+            variant="outline"
+            className="flex items-center"
+            onClick={handleExportCSV}
+            title="Download CSV"
+          >
+            <Download className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">Exportar CSV</span>
+          </Button>
           <Button
             variant="outline"
             className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
             onClick={handleReject}
             disabled={processing}
           >
-            <XCircle className="h-4 w-4 mr-2" />
-            Rejeitar / Solicitar Correção
+            <XCircle className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">Rejeitar</span>
           </Button>
           <Button
             className="bg-green-600 hover:bg-green-700 text-white"
             onClick={handleApprove}
             disabled={processing}
           >
-            <CheckCircle className="h-4 w-4 mr-2" />
-            Aprovar e Atualizar Estoque
+            <CheckCircle className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">Aprovar e Atualizar Estoque</span>
           </Button>
         </div>
       </div>

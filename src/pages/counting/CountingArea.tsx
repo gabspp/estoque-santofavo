@@ -321,11 +321,11 @@ export default function CountingArea() {
               <div className="h-12 w-12 bg-gray-100 rounded-md flex items-center justify-center shrink-0 font-bold text-gray-400 text-lg">
                 {product.name.charAt(0)}
               </div>
-              <div className="flex-1 min-w-0">
-                <div className="font-medium text-gray-900 truncate">
+              <div className="flex-1 min-w-0 py-1">
+                <div className="font-medium text-gray-900 leading-tight pr-2">
                   {product.name}
                 </div>
-                <div className="text-sm text-gray-500">
+                <div className="text-sm text-gray-500 mt-1">
                   {/* Simplified: No category/subcategory, just unit */}
                   {product.unit}
                 </div>

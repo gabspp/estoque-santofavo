@@ -6,10 +6,12 @@ import { ptBR } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { countingService } from "@/services/countingService";
+import { storeService } from "@/services/storeService";
 import { type StockCount } from "@/types";
 
 export default function ApprovalList() {
   const [counts, setCounts] = useState<StockCount[]>([]);
+  const [stores, setStores] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -18,7 +20,17 @@ export default function ApprovalList() {
 
   const loadData = async () => {
     try {
-      const allCounts = await countingService.getCounts();
+      const [allCounts, storesData] = await Promise.all([
+        countingService.getCounts(),
+        storeService.getAll(),
+      ]);
+
+      const storesMap: Record<string, string> = {};
+      storesData.forEach((s) => {
+        storesMap[s.id] = s.name;
+      });
+      setStores(storesMap);
+
       // Filter only pending review
       const pending = allCounts.filter((c) => c.status === "pending_review");
       setCounts(pending);
@@ -67,14 +79,21 @@ export default function ApprovalList() {
               className="flex flex-col overflow-hidden hover:shadow-md transition-shadow"
             >
               <div className="p-6 flex-1 space-y-4">
-                <div className="flex justify-between items-start">
-                  <div className="bg-yellow-100 text-yellow-800 px-2.5 py-0.5 rounded-full text-xs font-medium flex items-center gap-1">
+                <div className="flex justify-between items-start gap-2">
+                  <div className="bg-yellow-100 text-yellow-800 px-2.5 py-0.5 rounded-full text-xs font-medium flex items-center gap-1 shrink-0">
                     <Clock className="h-3 w-3" />
                     Aguardando Análise
                   </div>
-                  <span className="text-xs text-gray-400 font-mono">
-                    #{count.id.substring(0, 6)}
-                  </span>
+                  <div className="text-right">
+                    <div className="text-xs text-gray-500 font-mono">
+                      #{count.id.substring(0, 6)}
+                    </div>
+                    {count.store_id && stores[count.store_id] && (
+                      <div className="text-xs font-medium text-gray-700 mt-1">
+                        {stores[count.store_id]}
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <div>
