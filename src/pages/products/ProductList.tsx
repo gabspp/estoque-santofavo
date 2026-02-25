@@ -240,28 +240,16 @@ export default function ProductList() {
                     <td className="px-6 py-4 text-gray-600">{product.unit}</td>
                     <td className="px-6 py-4 text-center">
                       <div className="flex flex-col items-center">
-                        <span
-                          className={cn(
-                            "font-medium",
-                            product.current_stock <= product.min_stock
-                              ? "text-red-600"
-                              : "text-gray-900",
-                          )}
-                        >
+                        <span className="font-medium text-gray-900">
                           {product.current_stock}
                         </span>
-                        {product.current_stock <= product.min_stock && (
-                          <span className="flex items-center text-[10px] text-red-500 gap-1 mt-0.5">
-                            <AlertCircle className="h-3 w-3" />
-                            Baixo
-                          </span>
-                        )}
                       </div>
                     </td>
 
-                    {
                       stores.map(store => {
                         const isActive = product.active_status?.[store.id] !== false;
+                        const storeStock = product.inventory?.[store.id] ?? 0;
+                        const isLowStock = storeStock <= product.min_stock;
 
                         return (
                           <td key={store.id} className="px-6 py-4 text-center text-gray-600">
@@ -281,9 +269,20 @@ export default function ProductList() {
                                 />
                               </button>
                             ) : (
-                              <span className={cn(!isActive && "text-gray-300 line-through")}>
-                                {product.inventory?.[store.id] ?? 0}
-                              </span>
+                              <div className="flex flex-col items-center">
+                                <span className={cn(
+                                  !isActive && "text-gray-300 line-through",
+                                  isActive && isLowStock ? "text-red-600 font-medium" : "text-gray-900"
+                                )}>
+                                  {storeStock}
+                                </span>
+                                {isActive && isLowStock && (
+                                  <span className="flex items-center text-[10px] text-red-500 gap-1 mt-0.5">
+                                    <AlertCircle className="h-3 w-3" />
+                                    Baixo
+                                  </span>
+                                )}
+                              </div>
                             )}
                           </td>
                         );
