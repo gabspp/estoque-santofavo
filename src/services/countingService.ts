@@ -65,7 +65,7 @@ export const countingService = {
     };
   },
 
-  updateCount: async (id: string, items: StockCountItem[]): Promise<void> => {
+  updateCount: async (id: string, items: StockCountItem[], completed_categories?: string[]): Promise<void> => {
     // Upsert items (update quantity_counted)
     // Note: We need to map back to the DB structure (including count_id)
     const itemsToUpsert = items.map((item) => ({
@@ -84,7 +84,10 @@ export const countingService = {
     // Update timestamp on parent
     await supabase
       .from("stock_counts")
-      .update({ updated_at: new Date().toISOString() })
+      .update({
+        updated_at: new Date().toISOString(),
+        ...(completed_categories !== undefined ? { completed_categories } : {})
+      })
       .eq("id", id);
   },
 

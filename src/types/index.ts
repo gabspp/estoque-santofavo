@@ -79,6 +79,7 @@ export interface StockCount {
   date: string;
   status: StockCountStatus;
   items: StockCountItem[];
+  completed_categories?: string[];
   created_at: string;
   updated_at: string;
 }

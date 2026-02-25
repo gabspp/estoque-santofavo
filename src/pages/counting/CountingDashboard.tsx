@@ -172,7 +172,7 @@ export default function CountingDashboard() {
                       </div>
                       <div>
                         <div className="font-medium text-gray-900 flex items-center gap-2">
-                          Contagem #{count.id.substring(0, 6)}
+                          Contagem - Semana {format(new Date(count.created_at), "w")}
                           {count.store_id && stores[count.store_id] && (
                             <span className="text-sm font-normal text-gray-500">
                               - {stores[count.store_id]}
@@ -187,8 +187,16 @@ export default function CountingDashboard() {
                             { locale: ptBR },
                           )}
                         </div>
-                        <div className="text-xs text-gray-500">
-                          {count.items.length} itens listados
+                        <div className="text-xs text-gray-500 flex items-center gap-2 mt-1">
+                          <span>{count.items.length} itens</span>
+                          {count.completed_categories && count.completed_categories.length > 0 && (
+                            <>
+                              <span>•</span>
+                              <span className="text-blue-600 font-medium bg-blue-50 px-2 py-0.5 rounded-full">
+                                {count.completed_categories.length} categoria(s) concluída(s)
+                              </span>
+                            </>
+                          )}
                         </div>
                       </div>
                     </div>
