@@ -246,6 +246,7 @@ export default function ProductList() {
                       </div>
                     </td>
 
+                    {
                       stores.map(store => {
                         const isActive = product.active_status?.[store.id] !== false;
                         const storeStock = product.inventory?.[store.id] ?? 0;
