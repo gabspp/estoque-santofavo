@@ -1,16 +1,23 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { StoreIcon } from "lucide-react";
+import { StoreIcon, AlertTriangle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { storeService } from "@/services/storeService";
 import { countingService } from "@/services/countingService";
-import type { Store } from "@/types";
+import type { Store, StockCount } from "@/types";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 export default function StoreSelection() {
     const navigate = useNavigate();
     const [stores, setStores] = useState<Store[]>([]);
     const [loading, setLoading] = useState(true);
     const [processing, setProcessing] = useState(false);
+
+    // Modal de conflito
+    const [conflictCount, setConflictCount] = useState<StockCount | null>(null);
+    const [pendingStoreId, setPendingStoreId] = useState<string | null>(null);
 
     useEffect(() => {
         loadStores();
@@ -30,6 +37,24 @@ export default function StoreSelection() {
     const handleSelectStore = async (storeId: string) => {
         setProcessing(true);
         try {
+            const existing = await countingService.getDraftCountForStoreThisWeek(storeId);
+            if (existing) {
+                setPendingStoreId(storeId);
+                setConflictCount(existing);
+                return;
+            }
+            await createNewCount(storeId);
+        } catch (error) {
+            console.error("Failed to check existing count", error);
+            alert("Erro ao verificar contagens. Tente novamente.");
+        } finally {
+            setProcessing(false);
+        }
+    };
+
+    const createNewCount = async (storeId: string) => {
+        setProcessing(true);
+        try {
             const count = await countingService.createCount(storeId);
             navigate(`/contagem/${count.id}`);
         } catch (error) {
@@ -38,6 +63,24 @@ export default function StoreSelection() {
         } finally {
             setProcessing(false);
         }
+    };
+
+    const handleCancel = () => {
+        setConflictCount(null);
+        setPendingStoreId(null);
+    };
+
+    const handleResume = () => {
+        if (conflictCount) {
+            navigate(`/contagem/${conflictCount.id}`);
+        }
+    };
+
+    const handleStartNew = async () => {
+        if (!pendingStoreId) return;
+        setConflictCount(null);
+        setPendingStoreId(null);
+        await createNewCount(pendingStoreId);
     };
 
     if (loading) {
@@ -71,6 +114,58 @@ export default function StoreSelection() {
                     </Card>
                 ))}
             </div>
+
+            {/* Modal de conflito */}
+            {conflictCount && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+                    <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+                        <div className="flex items-start gap-3 mb-4">
+                            <div className="bg-yellow-100 p-2 rounded-full shrink-0">
+                                <AlertTriangle className="w-5 h-5 text-yellow-600" />
+                            </div>
+                            <div>
+                                <h2 className="text-lg font-bold text-gray-900">
+                                    Contagem em andamento
+                                </h2>
+                                <p className="text-sm text-gray-600 mt-1">
+                                    Já existe uma contagem em rascunho para essa loja nessa semana, iniciada em{" "}
+                                    <span className="font-medium">
+                                        {format(new Date(conflictCount.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                                    </span>
+                                    .
+                                </p>
+                                <p className="text-sm text-gray-600 mt-1">
+                                    O que deseja fazer?
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="flex flex-col gap-2 mt-6">
+                            <Button
+                                onClick={handleResume}
+                                className="w-full bg-brand-brown hover:bg-brand-brown/90 text-white"
+                            >
+                                Retomar contagem existente
+                            </Button>
+                            <Button
+                                onClick={handleStartNew}
+                                variant="outline"
+                                className="w-full border-gray-300"
+                                disabled={processing}
+                            >
+                                Iniciar nova contagem
+                            </Button>
+                            <Button
+                                onClick={handleCancel}
+                                variant="outline"
+                                className="w-full text-gray-500 border-gray-200"
+                            >
+                                Cancelar
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

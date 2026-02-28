@@ -152,6 +152,32 @@ export const countingService = {
     if (error) throw error;
   },
 
+  getDraftCountForStoreThisWeek: async (storeId: string): Promise<StockCount | null> => {
+    const now = new Date();
+    const day = now.getDay(); // 0=Dom, 1=Seg, ...
+    const diff = day === 0 ? -6 : 1 - day; // ajusta para segunda-feira
+    const startOfWeek = new Date(now);
+    startOfWeek.setDate(now.getDate() + diff);
+    startOfWeek.setHours(0, 0, 0, 0);
+
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 7);
+
+    const { data, error } = await supabase
+      .from("stock_counts")
+      .select("*, items:stock_count_items(*)")
+      .eq("store_id", storeId)
+      .eq("status", "draft")
+      .gte("created_at", startOfWeek.toISOString())
+      .lt("created_at", endOfWeek.toISOString())
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (error) throw error;
+    return data;
+  },
+
   reset: () => {
     // No-op for real service
   },
