@@ -7,27 +7,15 @@ import { Card } from "@/components/ui/card";
 import { countingService } from "@/services/countingService";
 import { productService } from "@/services/productService";
 import { storeService } from "@/services/storeService";
-import { type StockCount, type StockCountItem, type Product } from "@/types";
+import { type StockCount, type StockCountItem, type Product, type Subcategory } from "@/types";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/components/ui/use-toast";
 
-// Helper function to map category names to soft background/text colors
-const getCategoryColor = (categoryName: string, active: boolean, completed: boolean) => {
-  const norm = categoryName.toLowerCase();
-
-  // Base colors for known categories, default to gray if unknown
-  let baseColor = "gray";
-  if (norm.includes("insumo")) baseColor = "amber";
-  else if (norm.includes("embalagem")) baseColor = "blue";
-  else if (norm.includes("consumo")) baseColor = "emerald";
-  else if (norm.includes("apoio")) baseColor = "violet";
-
-  if (completed && active) return `bg-${baseColor}-600 text-white`;
-  if (completed) return `bg-${baseColor}-100 text-${baseColor}-700 border-${baseColor}-200`;
-
-  if (active) return `bg-brand-brown text-white shadow-md`;
-
-  return `bg-gray-100 text-gray-600 hover:bg-gray-200`;
+const getTabColor = (active: boolean, completed: boolean) => {
+  if (completed && active) return "bg-green-600 text-white shadow-md";
+  if (completed) return "bg-green-100 text-green-700 border-green-200";
+  if (active) return "bg-brand-brown text-white shadow-md";
+  return "bg-gray-100 text-gray-600 hover:bg-gray-200";
 };
 
 export default function CountingArea() {
@@ -38,6 +26,7 @@ export default function CountingArea() {
   const [count, setCount] = useState<StockCount | null>(null);
   const [items, setItems] = useState<StockCountItem[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
+  const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -67,9 +56,10 @@ export default function CountingArea() {
 
   const loadData = async (countId: string) => {
     try {
-      const [countData, productsData] = await Promise.all([
+      const [countData, productsData, subcatsData] = await Promise.all([
         countingService.getCountById(countId),
         productService.getProducts(),
+        productService.getSubcategories(),
       ]);
 
       if (!countData) {
@@ -110,6 +100,7 @@ export default function CountingArea() {
         : productsData;
 
       setProducts(activeProductsData);
+      setSubcategories(subcatsData);
       setItems(initialItems);
 
       const inputsMap: Record<string, string> = {};
@@ -118,17 +109,13 @@ export default function CountingArea() {
       });
       setLocalInputs(inputsMap);
 
-      // Setup initial category gracefully
-      if (activeProductsData.length > 0) {
-        const catIds = Array.from(new Set(activeProductsData.map(p => p.category).filter(Boolean))) as string[];
-        if (catIds.length > 0) {
-          setActiveCategory(catIds[0]);
-        } else {
-          setActiveCategory("Todos");
-        }
-      } else {
-        setActiveCategory("Todos");
-      }
+      // Setup initial tab: first subcategory that has active products, else "Todos"
+      const subcatMap = Object.fromEntries(subcatsData.map(s => [s.id, s.name]));
+      const usedSubcats = Array.from(
+        new Set(activeProductsData.map(p => p.subcategory_id ? subcatMap[p.subcategory_id] : null).filter(Boolean))
+      ).sort() as string[];
+
+      setActiveCategory(usedSubcats.length > 0 ? usedSubcats[0] : "Todos");
     } catch (error) {
       console.error("Error loading data:", error);
       toast({
@@ -247,13 +234,16 @@ export default function CountingArea() {
     }
   };
 
-  // Filter Logic
-  const availableCategoryIds = Array.from(new Set(products.map(p => p.category).filter(Boolean))) as string[];
-  const availableCategoriesSorted = availableCategoryIds.sort((a, b) => a.localeCompare(b));
+  // Filter Logic — group by subcategory name (already prefixed A, B, C... so sort = correct order)
+  const subcatMap = Object.fromEntries(subcategories.map(s => [s.id, s.name]));
+
+  const availableSubcats = Array.from(
+    new Set(products.map(p => p.subcategory_id ? subcatMap[p.subcategory_id] : null).filter(Boolean))
+  ).sort() as string[];
 
   const filterTabs = [
-    ...availableCategoriesSorted.map(name => ({ id: name, name })),
-    { id: "Todos", name: "Todos" }
+    ...availableSubcats.map(name => ({ id: name, name })),
+    { id: "Todos", name: "Todos" },
   ];
 
   const currentActiveCat = activeCategory || "Todos";
@@ -276,8 +266,9 @@ export default function CountingArea() {
       product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (product.barcode && product.barcode.includes(searchTerm));
 
+    const productSubcatName = product.subcategory_id ? subcatMap[product.subcategory_id] : null;
     const matchesCategory =
-      currentActiveCat === "Todos" || product.category === currentActiveCat;
+      currentActiveCat === "Todos" || productSubcatName === currentActiveCat;
 
     return matchesSearch && matchesCategory;
   });
@@ -343,7 +334,7 @@ export default function CountingArea() {
                     onClick={() => setActiveCategory(tab.id)}
                     className={cn(
                       "px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors flex items-center gap-2 border border-transparent",
-                      getCategoryColor(tab.name, isActive, isCompleted)
+                      getTabColor(isActive, isCompleted)
                     )}
                   >
                     {isCompleted && <Check className="h-3 w-3" />}

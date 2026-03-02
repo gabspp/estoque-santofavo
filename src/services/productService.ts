@@ -1,7 +1,16 @@
 import { supabase } from "@/lib/supabase";
-import { type Product, type StockEntry } from "@/types";
+import { type Product, type StockEntry, type Subcategory } from "@/types";
 
 export const productService = {
+  getSubcategories: async (): Promise<Subcategory[]> => {
+    const { data, error } = await supabase
+      .from("subcategories")
+      .select("*")
+      .order("name");
+    if (error) throw error;
+    return data || [];
+  },
+
   getProducts: async (): Promise<Product[]> => {
     // 1. Fetch products
     const { data: products, error: productsError } = await supabase
