@@ -23,6 +23,7 @@ export interface Subcategory {
 
 export interface Product {
   id: string;
+  code?: number;
   name: string;
   barcode?: string;
   category_id?: string; // UUID from categories table

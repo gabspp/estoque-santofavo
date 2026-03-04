@@ -201,6 +201,7 @@ export default function ProductList() {
           <table className="w-full text-sm text-left">
             <thead className="bg-gray-50 text-gray-700 font-medium border-b border-gray-100">
               <tr>
+                <th className="px-4 py-4 text-center text-gray-500 font-medium w-16">Cód.</th>
                 <th className="px-6 py-4 cursor-pointer hover:bg-gray-100" onClick={() => handleSort('name')}>
                   <div className="flex items-center gap-1">
                     Produto
@@ -256,6 +257,9 @@ export default function ProductList() {
                     key={product.id}
                     className="hover:bg-gray-50/50 transition-colors"
                   >
+                    <td className="px-4 py-4 text-center text-xs text-gray-400 font-mono w-16">
+                      {product.code ?? "-"}
+                    </td>
                     <td className="px-6 py-4">
                       <div className="font-medium text-gray-900">
                         {product.name}
