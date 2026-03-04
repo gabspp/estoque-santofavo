@@ -11,7 +11,7 @@ import { type Product, type Category, type Subcategory, type Store } from "@/typ
 import { storeService } from "@/services/storeService";
 import { cn } from "@/lib/utils";
 
-type SortField = 'name' | 'category' | 'subcategory';
+type SortField = 'code' | 'name' | 'category' | 'subcategory';
 type SortOrder = 'asc' | 'desc';
 
 export default function ProductList() {
@@ -139,6 +139,12 @@ export default function ProductList() {
 
   // 2. Sort
   const sortedProducts = [...filteredProducts].sort((a, b) => {
+    if (sortField === 'code') {
+      const codeA = a.code ?? Infinity;
+      const codeB = b.code ?? Infinity;
+      return sortOrder === 'asc' ? codeA - codeB : codeB - codeA;
+    }
+
     let valA = "";
     let valB = "";
 
@@ -201,7 +207,12 @@ export default function ProductList() {
           <table className="w-full text-sm text-left">
             <thead className="bg-gray-50 text-gray-700 font-medium border-b border-gray-100">
               <tr>
-                <th className="px-4 py-4 text-center text-gray-500 font-medium w-16">Cód.</th>
+                <th className="px-4 py-4 text-center w-16 cursor-pointer hover:bg-gray-100" onClick={() => handleSort('code')}>
+                  <div className="flex items-center justify-center gap-1 text-gray-500 font-medium">
+                    Cód.
+                    <ArrowUpDown className="h-3 w-3 text-gray-400" />
+                  </div>
+                </th>
                 <th className="px-6 py-4 cursor-pointer hover:bg-gray-100" onClick={() => handleSort('name')}>
                   <div className="flex items-center gap-1">
                     Produto
