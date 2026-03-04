@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { ArrowLeft, Save, Send, Search, ChevronLeft, ChevronRight, Check } from "lucide-react";
+import { ArrowLeft, Save, Send, Search, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -11,53 +11,108 @@ import { type StockCount, type StockCountItem, type Product, type Subcategory } 
 import { cn } from "@/lib/utils";
 import { useToast } from "@/components/ui/use-toast";
 
-// Color scheme per parent category — full class strings (Tailwind purge-safe)
+const CATEGORY_ORDER = [
+  "Insumos (Confeitaria)",
+  "Insumos (Salgados)",
+  "Insumos (Bar)",
+  "Embalagens",
+  "Material de Consumo",
+  "Material de Apoio"
+];
+
+const SUBCATEGORY_ORDER: Record<string, string[]> = {
+  "Insumos (Confeitaria)": [
+    "Farinhas e Amidos",
+    "Açúcares e Adoçantes",
+    "Laticínios e Derivados",
+    "Chocolates e Derivados de Cacau",
+    "Aditivos e Auxiliares",
+    "Óleos e Gorduras",
+    "Especiarias e Aromatizantes",
+    "Frutas Secas e Oleaginosas",
+    "Hortifruit",
+    "Outros Insumos de Confeitaria"
+  ],
+  "Insumos (Salgados)": [
+    "Insumos para Panificação",
+    "Queijos e Laticínios",
+    "Ervas e Legumes",
+    "Proteínas",
+    "Mercearia e Temperos",
+    "Outros Insumos de salgados"
+  ],
+  "Insumos (Bar)": [
+    "Bebidas Para Revenda",
+    "Saches",
+    "Leites",
+    "Bases e Ingredientes",
+    "Outros Insumos para Bar"
+  ],
+  "Embalagens": [
+    "Papéis para PDM",
+    "Embalagens para Produtos",
+    "Caixas",
+    "Sacos e Sacolas",
+    "Cordas",
+    "Etiquetas"
+  ],
+  "Material de Consumo": [
+    "Utensílios de Produção",
+    "Papel",
+    "Descartáveis"
+  ],
+  "Material de Apoio": [
+    "Material de Escritório/Diversos",
+    "Material de Limpeza"
+  ]
+};
+
 const CATEGORY_COLORS: Record<string, { base: string; active: string; completed: string }> = {
   confeitaria: {
-    base:      "bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100",
-    active:    "bg-amber-500 text-white shadow-md border border-amber-500",
-    completed: "bg-amber-100 text-amber-700 border border-amber-300",
+    base: "bg-amber-50 text-amber-800 border-amber-200 hover:bg-amber-100",
+    active: "bg-amber-500 text-white shadow-md border-amber-500",
+    completed: "bg-amber-100 text-amber-700 border-amber-300",
   },
   salgado: {
-    base:      "bg-rose-50 text-rose-800 border border-rose-200 hover:bg-rose-100",
-    active:    "bg-rose-500 text-white shadow-md border border-rose-500",
-    completed: "bg-rose-100 text-rose-700 border border-rose-300",
+    base: "bg-rose-50 text-rose-800 border-rose-200 hover:bg-rose-100",
+    active: "bg-rose-500 text-white shadow-md border-rose-500",
+    completed: "bg-rose-100 text-rose-700 border-rose-300",
   },
   bar: {
-    base:      "bg-violet-50 text-violet-800 border border-violet-200 hover:bg-violet-100",
-    active:    "bg-violet-500 text-white shadow-md border border-violet-500",
-    completed: "bg-violet-100 text-violet-700 border border-violet-300",
+    base: "bg-violet-50 text-violet-800 border-violet-200 hover:bg-violet-100",
+    active: "bg-violet-500 text-white shadow-md border-violet-500",
+    completed: "bg-violet-100 text-violet-700 border-violet-300",
   },
   embalagem: {
-    base:      "bg-sky-50 text-sky-800 border border-sky-200 hover:bg-sky-100",
-    active:    "bg-sky-500 text-white shadow-md border border-sky-500",
-    completed: "bg-sky-100 text-sky-700 border border-sky-300",
+    base: "bg-sky-50 text-sky-800 border-sky-200 hover:bg-sky-100",
+    active: "bg-sky-500 text-white shadow-md border-sky-500",
+    completed: "bg-sky-100 text-sky-700 border-sky-300",
   },
   consumo: {
-    base:      "bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100",
-    active:    "bg-emerald-500 text-white shadow-md border border-emerald-500",
-    completed: "bg-emerald-100 text-emerald-700 border border-emerald-300",
+    base: "bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100",
+    active: "bg-emerald-500 text-white shadow-md border-emerald-500",
+    completed: "bg-emerald-100 text-emerald-700 border-emerald-300",
   },
   apoio: {
-    base:      "bg-slate-100 text-slate-700 border border-slate-200 hover:bg-slate-200",
-    active:    "bg-slate-500 text-white shadow-md border border-slate-500",
-    completed: "bg-slate-200 text-slate-700 border border-slate-300",
+    base: "bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200",
+    active: "bg-slate-500 text-white shadow-md border-slate-500",
+    completed: "bg-slate-200 text-slate-700 border-slate-300",
   },
 };
 
 const getTabColor = (parentCategory: string, active: boolean, completed: boolean): string => {
   const n = parentCategory.toLowerCase();
   const scheme =
-    n.includes("salgado")    ? CATEGORY_COLORS.salgado    :
-    n.includes("bar")        ? CATEGORY_COLORS.bar         :
-    n.includes("confeitaria") || n.includes("insumo") ? CATEGORY_COLORS.confeitaria :
-    n.includes("embalagem")  ? CATEGORY_COLORS.embalagem   :
-    n.includes("consumo")    ? CATEGORY_COLORS.consumo     :
-    CATEGORY_COLORS.apoio;
+    n.includes("salgado") ? CATEGORY_COLORS.salgado :
+      n.includes("bar") ? CATEGORY_COLORS.bar :
+        n.includes("confeitaria") || n.includes("insumo") ? CATEGORY_COLORS.confeitaria :
+          n.includes("embalagem") ? CATEGORY_COLORS.embalagem :
+            n.includes("consumo") ? CATEGORY_COLORS.consumo :
+              CATEGORY_COLORS.apoio;
 
   if (completed && active) return scheme.active;
-  if (completed)           return scheme.completed;
-  if (active)              return scheme.active;
+  if (completed) return scheme.completed;
+  if (active) return scheme.active;
   return scheme.base;
 };
 
@@ -76,8 +131,9 @@ export default function CountingArea() {
   // Filter states
   const [searchTerm, setSearchTerm] = useState("");
   const [activeCategory, setActiveCategory] = useState<string>("");
+  const [activeSubcategory, setActiveSubcategory] = useState<string>("");
   const [storeName, setStoreName] = useState<string>("");
-  const [completedCategories, setCompletedCategories] = useState<string[]>([]);
+  const [completedSubcategories, setCompletedSubcategories] = useState<string[]>([]);
 
   // UI States
   const [localInputs, setLocalInputs] = useState<Record<string, string>>({});
@@ -123,7 +179,7 @@ export default function CountingArea() {
         }
       }
 
-      setCompletedCategories(countData.completed_categories || []);
+      setCompletedSubcategories(countData.completed_categories || []);
 
       // Initialize items if empty (first load)
       let initialItems = countData.items;
@@ -136,7 +192,16 @@ export default function CountingArea() {
       }
 
       setCount(countData);
-      productsData.sort((a, b) => a.name.localeCompare(b.name)); // Sort alphabetically
+
+      // Sort items by code, fallback to name
+      productsData.sort((a, b) => {
+        if (a.code !== undefined && b.code !== undefined) {
+          return a.code - b.code;
+        }
+        if (a.code !== undefined) return -1;
+        if (b.code !== undefined) return 1;
+        return a.name.localeCompare(b.name);
+      });
 
       const activeProductsData = countData.store_id
         ? productsData.filter(p => p.active_status?.[countData.store_id!] !== false)
@@ -152,13 +217,12 @@ export default function CountingArea() {
       });
       setLocalInputs(inputsMap);
 
-      // Setup initial tab: first group that has active products, else "Todos"
-      const loadedSubcatMap = Object.fromEntries(subcatsData.map(s => [s.id, s.name]));
-      const getGroup = (p: Product) =>
-        (p.subcategory_id && loadedSubcatMap[p.subcategory_id]) || p.category || "Sem categoria";
+      // Setup initial tab layout
+      const firstCat = CATEGORY_ORDER[0];
+      const firstSubcat = SUBCATEGORY_ORDER[firstCat]?.[0] || "";
 
-      const usedGroups = Array.from(new Set(activeProductsData.map(getGroup))).sort();
-      setActiveCategory(usedGroups.length > 0 ? usedGroups[0] : "Todos");
+      setActiveCategory(firstCat);
+      setActiveSubcategory(firstSubcat);
     } catch (error) {
       console.error("Error loading data:", error);
       toast({
@@ -184,11 +248,11 @@ export default function CountingArea() {
     );
   };
 
-  const handleSave = async (silent = false, extraCompletedCats?: string[]) => {
+  const handleSave = async (silent = false, extraCompleted?: string[]) => {
     if (!id) return;
     setSaving(true);
     try {
-      const newCompleted = extraCompletedCats || completedCategories;
+      const newCompleted = extraCompleted || completedSubcategories;
       await countingService.updateCount(id, items, newCompleted);
       if (!silent) {
         toast({
@@ -223,7 +287,7 @@ export default function CountingArea() {
     setSaving(true);
     try {
       // Save first to ensure latest data
-      await countingService.updateCount(id, items, completedCategories);
+      await countingService.updateCount(id, items, completedSubcategories);
       await countingService.finalizeCount(id);
 
       toast({
@@ -244,73 +308,46 @@ export default function CountingArea() {
     }
   };
 
-  const handleCompleteCategory = () => {
-    if (activeCategory === "Todos") return;
+  const advanceToNextUncompleted = (newCompleted: string[]) => {
+    for (const cat of CATEGORY_ORDER) {
+      const subcats = SUBCATEGORY_ORDER[cat] || [];
+      for (const subcat of subcats) {
+        if (!newCompleted.includes(subcat)) {
+          setActiveCategory(cat);
+          setActiveSubcategory(subcat);
+          return;
+        }
+      }
+    }
+  };
 
-    let newCompleted = [...completedCategories];
-    if (!newCompleted.includes(activeCategory)) {
-      newCompleted.push(activeCategory);
-      setCompletedCategories(newCompleted);
+  const handleCompleteSubcategory = () => {
+    if (!activeSubcategory) return;
+
+    let newCompleted = [...completedSubcategories];
+    if (!newCompleted.includes(activeSubcategory)) {
+      newCompleted.push(activeSubcategory);
+      setCompletedSubcategories(newCompleted);
     }
 
     // Auto-save when completing
     handleSave(true, newCompleted);
 
     toast({
-      title: "Categoria concluída!",
-      description: `${activeCategory} marcada como conferida.`,
+      title: "Subcategoria concluída!",
+      description: `${activeSubcategory} marcada como conferida.`,
       variant: "success"
     });
 
-    // Move to next uncompleted category if any
-    const idx = filterTabs.findIndex(t => t.id === activeCategory);
-    let nextTabId = null;
-    for (let i = idx + 1; i < filterTabs.length; i++) {
-      if (filterTabs[i].id !== "Todos" && !newCompleted.includes(filterTabs[i].id)) {
-        nextTabId = filterTabs[i].id;
-        break;
-      }
-    }
-
-    if (nextTabId) {
-      setActiveCategory(nextTabId);
-    }
+    advanceToNextUncompleted(newCompleted);
   };
 
-  // Filter Logic — group by subcategory name when available, else fall back to legacy category field
+  // Resolve subcategories map
   const subcatMap = Object.fromEntries(subcategories.map(s => [s.id, s.name]));
 
-  // For each product, resolve the display group name
-  const getProductGroup = (p: Product): string =>
+  // For each product, resolve the exact subcategory name it belongs to
+  const getProductSubcategory = (p: Product): string =>
     (p.subcategory_id && subcatMap[p.subcategory_id]) || p.category || "Sem categoria";
-
-  const availableSubcats = Array.from(
-    new Set(products.map(getProductGroup))
-  ).sort() as string[];
-
-  // Build subcategoryName → parentCategory map for color coding
-  const tabToParentCat: Record<string, string> = {};
-  products.forEach(p => {
-    const group = getProductGroup(p);
-    if (!tabToParentCat[group]) tabToParentCat[group] = p.category || group;
-  });
-
-  const filterTabs = [
-    ...availableSubcats.map(name => ({ id: name, name, parent: tabToParentCat[name] || "" })),
-    { id: "Todos", name: "Todos", parent: "" },
-  ];
-
-  const currentActiveCat = activeCategory || "Todos";
-
-  const handlePrevTab = () => {
-    const idx = filterTabs.findIndex(t => t.id === currentActiveCat);
-    if (idx > 0) setActiveCategory(filterTabs[idx - 1].id);
-  };
-
-  const handleNextTab = () => {
-    const idx = filterTabs.findIndex(t => t.id === currentActiveCat);
-    if (idx < filterTabs.length - 1) setActiveCategory(filterTabs[idx + 1].id);
-  };
 
   const filteredItems = items.filter((item) => {
     const product = products.find((p) => p.id === item.product_id);
@@ -320,8 +357,8 @@ export default function CountingArea() {
       product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (product.barcode && product.barcode.includes(searchTerm));
 
-    const matchesCategory =
-      currentActiveCat === "Todos" || getProductGroup(product) === currentActiveCat;
+    const productSubcat = getProductSubcategory(product);
+    const matchesCategory = productSubcat === activeSubcategory;
 
     return matchesSearch && matchesCategory;
   });
@@ -329,7 +366,7 @@ export default function CountingArea() {
   if (loading)
     return <div className="p-8 text-center">Carregando contagem...</div>;
 
-  const isCurrentCategoryCompleted = completedCategories.includes(currentActiveCat);
+  const isCurrentSubcategoryCompleted = completedSubcategories.includes(activeSubcategory);
 
   return (
     <div className="space-y-6 pb-24">
@@ -371,60 +408,86 @@ export default function CountingArea() {
             />
           </div>
 
-          <div className="flex items-center gap-1">
-            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 shrink-0 text-gray-500 mb-2" onClick={handlePrevTab}>
-              <ChevronLeft className="h-5 w-5" />
-            </Button>
-
-            <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar flex-1 scroll-smooth">
-              {filterTabs.map((tab) => {
-                const isActive = currentActiveCat === tab.id;
-                const isCompleted = completedCategories.includes(tab.id);
+          <div className="space-y-3">
+            {/* Top Tier: Categories */}
+            <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar scroll-smooth">
+              {CATEGORY_ORDER.map((cat) => {
+                const isActive = activeCategory === cat;
+                const subcats = SUBCATEGORY_ORDER[cat] || [];
+                // A category is visually "completed" if all its subcategories are completed
+                const isCompleted = subcats.length > 0 && subcats.every(sub => completedSubcategories.includes(sub));
 
                 return (
                   <button
-                    key={tab.id}
-                    onClick={() => setActiveCategory(tab.id)}
+                    key={cat}
+                    onClick={() => {
+                      setActiveCategory(cat);
+                      if (SUBCATEGORY_ORDER[cat]?.length > 0) {
+                        setActiveSubcategory(SUBCATEGORY_ORDER[cat][0]);
+                      }
+                    }}
                     className={cn(
-                      "px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors flex items-center gap-2 border border-transparent",
-                      getTabColor(tab.parent, isActive, isCompleted)
+                      "px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors flex items-center gap-2 border",
+                      isActive
+                        ? "bg-slate-800 text-white border-slate-800 shadow-md"
+                        : isCompleted
+                          ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                          : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
                     )}
                   >
-                    {isCompleted && <Check className="h-3 w-3" />}
-                    {tab.name}
+                    {isCompleted && <Check className="h-4 w-4 text-emerald-500" />}
+                    {cat}
                   </button>
                 )
               })}
             </div>
 
-            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 shrink-0 text-gray-500 mb-2" onClick={handleNextTab}>
-              <ChevronRight className="h-5 w-5" />
-            </Button>
+            {/* Second Tier: Subcategories */}
+            {activeCategory && SUBCATEGORY_ORDER[activeCategory] && (
+              <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar scroll-smooth">
+                {SUBCATEGORY_ORDER[activeCategory].map((subcat) => {
+                  const isActive = activeSubcategory === subcat;
+                  const isCompleted = completedSubcategories.includes(subcat);
+
+                  return (
+                    <button
+                      key={subcat}
+                      onClick={() => setActiveSubcategory(subcat)}
+                      className={cn(
+                        "px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-colors flex items-center gap-1.5 border border-transparent",
+                        getTabColor(activeCategory, isActive, isCompleted)
+                      )}
+                    >
+                      {isCompleted && <Check className="h-3 w-3" />}
+                      {subcat}
+                    </button>
+                  )
+                })}
+              </div>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Control for Category Completion */}
-      {currentActiveCat !== "Todos" && (
-        <div className="flex justify-between items-center bg-blue-50 p-4 rounded-xl border border-blue-100">
-          <div>
-            <h3 className="font-semibold text-blue-900">
-              {isCurrentCategoryCompleted ? "Categoria conferida" : `Conferindo: ${currentActiveCat}`}
-            </h3>
-            <p className="text-sm text-blue-700 mt-1">
-              {isCurrentCategoryCompleted
-                ? "Você já marcou essa categoria como concluída, mas pode ajustar se precisar."
-                : `Contém ${filteredItems.length} itens para serem verificados.`}
-            </p>
-          </div>
-          {!isCurrentCategoryCompleted && (
-            <Button onClick={handleCompleteCategory} size="sm" className="bg-blue-600 hover:bg-blue-700 text-white shrink-0">
-              <Check className="h-4 w-4 mr-2" />
-              Concluir Categoria
-            </Button>
-          )}
+      {/* Control for Subcategory Completion */}
+      <div className="flex justify-between items-center bg-blue-50 p-4 rounded-xl border border-blue-100">
+        <div>
+          <h3 className="font-semibold text-blue-900">
+            {isCurrentSubcategoryCompleted ? "Subcategoria conferida" : `Conferindo: ${activeSubcategory}`}
+          </h3>
+          <p className="text-sm text-blue-700 mt-1">
+            {isCurrentSubcategoryCompleted
+              ? "Você já marcou essa subcategoria como concluída, mas pode ajustar se precisar."
+              : `Contém ${filteredItems.length} itens para serem verificados.`}
+          </p>
         </div>
-      )}
+        {!isCurrentSubcategoryCompleted && (
+          <Button onClick={handleCompleteSubcategory} size="sm" className="hidden sm:flex bg-white hover:bg-red-50 text-red-600 border border-red-300 font-semibold shrink-0">
+            <Check className="h-4 w-4 mr-2" />
+            Concluir Subcategoria
+          </Button>
+        )}
+      </div>
 
       {/* Items List */}
       <div className="grid grid-cols-1 gap-4">
@@ -449,7 +512,7 @@ export default function CountingArea() {
                   {product.name}
                 </div>
                 <div className="text-sm text-gray-500 mt-1">
-                  {product.unit}
+                  {product.unit} {product.code !== undefined ? `- Cód: ${product.code}` : ""}
                 </div>
               </div>
               <div className="w-24 shrink-0" onClick={(e) => e.stopPropagation()}>
@@ -484,10 +547,18 @@ export default function CountingArea() {
         })}
         {filteredItems.length === 0 && (
           <div className="text-center py-12 text-gray-500">
-            Nenhum produto encontrado.
+            Nenhum produto encontrado na subcategoria.
           </div>
         )}
       </div>
+
+      {!isCurrentSubcategoryCompleted && filteredItems.length > 0 && (
+        <div className="flex justify-end mt-4 px-2">
+          <Button onClick={handleCompleteSubcategory} className="bg-white hover:bg-red-50 text-red-600 border border-red-300 font-semibold shadow-sm px-6">
+            Concluir Subcategoria
+          </Button>
+        </div>
+      )}
 
       {/* Floating Action Bar (Save and Finalize) */}
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-200 flex gap-3 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] md:pl-64 z-20">
