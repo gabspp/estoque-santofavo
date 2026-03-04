@@ -21,7 +21,12 @@ BEGIN
 END $$;
 
 -- STEP 2: Rename existing categories to the new names
-UPDATE categories SET name = 'Insumos (Confeitaria)'  WHERE name IN ('1- Insumos', '1-Insumos', 'Insumos');
+-- Using ILIKE to catch all spacing variants: "1 - Insumos", "1- Insumos", "1-Insumos"
+UPDATE categories SET name = 'Insumos (Confeitaria)'
+  WHERE name ILIKE '%insumo%'
+  AND name NOT ILIKE '%salgado%'
+  AND name NOT ILIKE '%bar%'
+  AND name != 'Insumos (Confeitaria)';
 UPDATE categories SET name = 'Embalagens'             WHERE name IN ('2 - Embalagens', '2- Embalagens');
 UPDATE categories SET name = 'Material de Consumo'    WHERE name IN ('3- Material de Consumo', '3 - Material de Consumo');
 UPDATE categories SET name = 'Material de Apoio'      WHERE name IN ('4- Material de Apoio', '4 - Material de Apoio');
@@ -34,7 +39,10 @@ INSERT INTO categories (name) VALUES ('Insumos (Bar)')      ON CONFLICT (name) D
 UPDATE products
 SET category    = 'Insumos (Confeitaria)',
     category_id = (SELECT id FROM categories WHERE name = 'Insumos (Confeitaria)')
-WHERE category IN ('1- Insumos', '1-Insumos', 'Insumos');
+WHERE category ILIKE '%insumo%'
+  AND category NOT ILIKE '%salgado%'
+  AND category NOT ILIKE '%bar%'
+  AND category != 'Insumos (Confeitaria)';
 
 UPDATE products
 SET category    = 'Embalagens',
