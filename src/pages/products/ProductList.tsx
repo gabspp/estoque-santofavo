@@ -1,13 +1,13 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Plus, Search, Pencil, Trash2, AlertCircle, ArrowUpDown } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, AlertCircle, ArrowUpDown, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { productService } from "@/services/productService";
 import { categoryService } from "@/services/categoryService";
 import { useAuth } from "@/context/AuthContext";
-import { type Product, type Subcategory, type Store } from "@/types";
+import { type Product, type Category, type Subcategory, type Store } from "@/types";
 import { storeService } from "@/services/storeService";
 import { cn } from "@/lib/utils";
 
@@ -17,10 +17,16 @@ type SortOrder = 'asc' | 'desc';
 export default function ProductList() {
   const { role } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [editMode, setEditMode] = useState(false);
+
+  // Quick edit modal state
+  const [quickEditProduct, setQuickEditProduct] = useState<Product | null>(null);
+  const [qeForm, setQeForm] = useState({ unit: "", category_id: "", subcategory_id: "" });
+  const [qeSaving, setQeSaving] = useState(false);
 
   // Sorting state
   const [sortField, setSortField] = useState<SortField>('subcategory');
@@ -34,18 +40,49 @@ export default function ProductList() {
 
   const loadData = async () => {
     try {
-      const [productsData, subcategoriesData, storesData] = await Promise.all([
+      const [productsData, categoriesData, subcategoriesData, storesData] = await Promise.all([
         productService.getProducts(),
+        categoryService.getCategories(),
         categoryService.getAllSubcategories(),
         storeService.getAll()
       ]);
       setProducts(productsData);
+      setCategories(categoriesData);
       setSubcategories(subcategoriesData);
       setStores(storesData);
     } catch (error) {
       console.error("Error loading data:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleOpenQuickEdit = (product: Product) => {
+    setQuickEditProduct(product);
+    setQeForm({
+      unit: product.unit,
+      category_id: product.category_id || "",
+      subcategory_id: product.subcategory_id || "",
+    });
+  };
+
+  const handleSaveQuickEdit = async () => {
+    if (!quickEditProduct) return;
+    setQeSaving(true);
+    try {
+      const selectedCategory = categories.find(c => c.id === qeForm.category_id);
+      await productService.updateProduct(quickEditProduct.id, {
+        unit: qeForm.unit,
+        category_id: qeForm.category_id || undefined,
+        subcategory_id: qeForm.subcategory_id || undefined,
+        category: selectedCategory?.name || quickEditProduct.category,
+      });
+      setQuickEditProduct(null);
+      loadData();
+    } catch (e) {
+      console.error("Erro ao salvar edição rápida", e);
+    } finally {
+      setQeSaving(false);
     }
   };
 
@@ -293,15 +330,26 @@ export default function ProductList() {
                     {role === 'admin' && (
                       <td className="px-6 py-4 text-right">
                         <div className="flex items-center justify-end gap-2">
-                          <Link to={`/produtos/${product.id}`}>
+                          {editMode ? (
                             <Button
                               variant="ghost"
                               size="sm"
                               className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                              onClick={() => handleOpenQuickEdit(product)}
                             >
                               <Pencil className="h-4 w-4" />
                             </Button>
-                          </Link>
+                          ) : (
+                            <Link to={`/produtos/${product.id}`}>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                            </Link>
+                          )}
                           <Button
                             variant="ghost"
                             size="sm"
@@ -320,6 +368,85 @@ export default function ProductList() {
           </table>
         </div>
       </Card >
+      {/* Quick Edit Modal */}
+      {quickEditProduct && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-sm p-6">
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-lg font-bold text-gray-900">Edição Rápida</h2>
+              <button onClick={() => setQuickEditProduct(null)} className="text-gray-400 hover:text-gray-600">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <p className="text-sm text-gray-500 mb-4 -mt-2 truncate">{quickEditProduct.name}</p>
+
+            <div className="space-y-4">
+              {/* Unidade */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Unidade</label>
+                <Input
+                  list="unit-options"
+                  value={qeForm.unit}
+                  onChange={e => setQeForm(f => ({ ...f, unit: e.target.value }))}
+                  placeholder="ex: kg, un, pct"
+                />
+                <datalist id="unit-options">
+                  {["kg", "un", "lt", "pct", "cx", "g", "ml"].map(u => (
+                    <option key={u} value={u} />
+                  ))}
+                </datalist>
+              </div>
+
+              {/* Categoria */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Categoria</label>
+                <select
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-brown/30"
+                  value={qeForm.category_id}
+                  onChange={e => setQeForm(f => ({ ...f, category_id: e.target.value, subcategory_id: "" }))}
+                >
+                  <option value="">Selecione...</option>
+                  {categories.map(c => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Subcategoria */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Subcategoria</label>
+                <select
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-brown/30 disabled:bg-gray-50 disabled:text-gray-400"
+                  value={qeForm.subcategory_id}
+                  onChange={e => setQeForm(f => ({ ...f, subcategory_id: e.target.value }))}
+                  disabled={!qeForm.category_id}
+                >
+                  <option value="">Selecione...</option>
+                  {subcategories
+                    .filter(s => s.category_id === qeForm.category_id)
+                    .map(s => (
+                      <option key={s.id} value={s.id}>{s.name}</option>
+                    ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="flex gap-2 mt-6">
+              <Button variant="outline" className="flex-1" onClick={() => setQuickEditProduct(null)}>
+                Cancelar
+              </Button>
+              <Button
+                className="flex-1 bg-brand-brown hover:bg-brand-brown/90 text-white"
+                onClick={handleSaveQuickEdit}
+                disabled={qeSaving}
+              >
+                {qeSaving ? "Salvando..." : "Salvar"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div >
   );
 }
