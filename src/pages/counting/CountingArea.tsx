@@ -11,11 +11,54 @@ import { type StockCount, type StockCountItem, type Product, type Subcategory } 
 import { cn } from "@/lib/utils";
 import { useToast } from "@/components/ui/use-toast";
 
-const getTabColor = (active: boolean, completed: boolean) => {
-  if (completed && active) return "bg-green-600 text-white shadow-md";
-  if (completed) return "bg-green-100 text-green-700 border-green-200";
-  if (active) return "bg-brand-brown text-white shadow-md";
-  return "bg-gray-100 text-gray-600 hover:bg-gray-200";
+// Color scheme per parent category — full class strings (Tailwind purge-safe)
+const CATEGORY_COLORS: Record<string, { base: string; active: string; completed: string }> = {
+  confeitaria: {
+    base:      "bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100",
+    active:    "bg-amber-500 text-white shadow-md border border-amber-500",
+    completed: "bg-amber-100 text-amber-700 border border-amber-300",
+  },
+  salgado: {
+    base:      "bg-rose-50 text-rose-800 border border-rose-200 hover:bg-rose-100",
+    active:    "bg-rose-500 text-white shadow-md border border-rose-500",
+    completed: "bg-rose-100 text-rose-700 border border-rose-300",
+  },
+  bar: {
+    base:      "bg-violet-50 text-violet-800 border border-violet-200 hover:bg-violet-100",
+    active:    "bg-violet-500 text-white shadow-md border border-violet-500",
+    completed: "bg-violet-100 text-violet-700 border border-violet-300",
+  },
+  embalagem: {
+    base:      "bg-sky-50 text-sky-800 border border-sky-200 hover:bg-sky-100",
+    active:    "bg-sky-500 text-white shadow-md border border-sky-500",
+    completed: "bg-sky-100 text-sky-700 border border-sky-300",
+  },
+  consumo: {
+    base:      "bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100",
+    active:    "bg-emerald-500 text-white shadow-md border border-emerald-500",
+    completed: "bg-emerald-100 text-emerald-700 border border-emerald-300",
+  },
+  apoio: {
+    base:      "bg-slate-100 text-slate-700 border border-slate-200 hover:bg-slate-200",
+    active:    "bg-slate-500 text-white shadow-md border border-slate-500",
+    completed: "bg-slate-200 text-slate-700 border border-slate-300",
+  },
+};
+
+const getTabColor = (parentCategory: string, active: boolean, completed: boolean): string => {
+  const n = parentCategory.toLowerCase();
+  const scheme =
+    n.includes("salgado")    ? CATEGORY_COLORS.salgado    :
+    n.includes("bar")        ? CATEGORY_COLORS.bar         :
+    n.includes("confeitaria") || n.includes("insumo") ? CATEGORY_COLORS.confeitaria :
+    n.includes("embalagem")  ? CATEGORY_COLORS.embalagem   :
+    n.includes("consumo")    ? CATEGORY_COLORS.consumo     :
+    CATEGORY_COLORS.apoio;
+
+  if (completed && active) return scheme.active;
+  if (completed)           return scheme.completed;
+  if (active)              return scheme.active;
+  return scheme.base;
 };
 
 export default function CountingArea() {
@@ -245,9 +288,16 @@ export default function CountingArea() {
     new Set(products.map(getProductGroup))
   ).sort() as string[];
 
+  // Build subcategoryName → parentCategory map for color coding
+  const tabToParentCat: Record<string, string> = {};
+  products.forEach(p => {
+    const group = getProductGroup(p);
+    if (!tabToParentCat[group]) tabToParentCat[group] = p.category || group;
+  });
+
   const filterTabs = [
-    ...availableSubcats.map(name => ({ id: name, name })),
-    { id: "Todos", name: "Todos" },
+    ...availableSubcats.map(name => ({ id: name, name, parent: tabToParentCat[name] || "" })),
+    { id: "Todos", name: "Todos", parent: "" },
   ];
 
   const currentActiveCat = activeCategory || "Todos";
@@ -337,7 +387,7 @@ export default function CountingArea() {
                     onClick={() => setActiveCategory(tab.id)}
                     className={cn(
                       "px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors flex items-center gap-2 border border-transparent",
-                      getTabColor(isActive, isCompleted)
+                      getTabColor(tab.parent, isActive, isCompleted)
                     )}
                   >
                     {isCompleted && <Check className="h-3 w-3" />}
