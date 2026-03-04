@@ -109,13 +109,13 @@ export default function CountingArea() {
       });
       setLocalInputs(inputsMap);
 
-      // Setup initial tab: first subcategory that has active products, else "Todos"
-      const subcatMap = Object.fromEntries(subcatsData.map(s => [s.id, s.name]));
-      const usedSubcats = Array.from(
-        new Set(activeProductsData.map(p => p.subcategory_id ? subcatMap[p.subcategory_id] : null).filter(Boolean))
-      ).sort() as string[];
+      // Setup initial tab: first group that has active products, else "Todos"
+      const loadedSubcatMap = Object.fromEntries(subcatsData.map(s => [s.id, s.name]));
+      const getGroup = (p: Product) =>
+        (p.subcategory_id && loadedSubcatMap[p.subcategory_id]) || p.category || "Sem categoria";
 
-      setActiveCategory(usedSubcats.length > 0 ? usedSubcats[0] : "Todos");
+      const usedGroups = Array.from(new Set(activeProductsData.map(getGroup))).sort();
+      setActiveCategory(usedGroups.length > 0 ? usedGroups[0] : "Todos");
     } catch (error) {
       console.error("Error loading data:", error);
       toast({
@@ -234,11 +234,15 @@ export default function CountingArea() {
     }
   };
 
-  // Filter Logic — group by subcategory name (already prefixed A, B, C... so sort = correct order)
+  // Filter Logic — group by subcategory name when available, else fall back to legacy category field
   const subcatMap = Object.fromEntries(subcategories.map(s => [s.id, s.name]));
 
+  // For each product, resolve the display group name
+  const getProductGroup = (p: Product): string =>
+    (p.subcategory_id && subcatMap[p.subcategory_id]) || p.category || "Sem categoria";
+
   const availableSubcats = Array.from(
-    new Set(products.map(p => p.subcategory_id ? subcatMap[p.subcategory_id] : null).filter(Boolean))
+    new Set(products.map(getProductGroup))
   ).sort() as string[];
 
   const filterTabs = [
@@ -266,9 +270,8 @@ export default function CountingArea() {
       product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (product.barcode && product.barcode.includes(searchTerm));
 
-    const productSubcatName = product.subcategory_id ? subcatMap[product.subcategory_id] : null;
     const matchesCategory =
-      currentActiveCat === "Todos" || productSubcatName === currentActiveCat;
+      currentActiveCat === "Todos" || getProductGroup(product) === currentActiveCat;
 
     return matchesSearch && matchesCategory;
   });
