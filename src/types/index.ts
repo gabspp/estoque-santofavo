@@ -59,6 +59,7 @@ export interface StockCountItem {
   product_id: string;
   quantity_counted: number;
   quantity_system: number; // Snapshot of system stock at time of count
+  to_buy?: boolean;
 }
 
 export interface Store {

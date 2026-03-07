@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { ArrowLeft, CheckCircle, XCircle, AlertTriangle, Download } from "lucide-react";
+import { ArrowLeft, CheckCircle, XCircle, AlertTriangle, Download, ShoppingCart } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
@@ -117,12 +117,13 @@ export default function ApprovalDetail() {
     try {
       const nameStore = storeName || "Geral";
       const csvContent = [
-        ["Produto", "Quantidade Contada", "Quantidade Sistema", "Diferença"],
+        ["Produto", "Quantidade Contada", "Quantidade Sistema", "Diferença", "Comprar"],
         ...count.items.map((item) => {
           const product = products.find((p) => p.id === item.product_id);
           const name = product ? product.name : "Produto Desconhecido";
           const diff = item.quantity_counted - item.quantity_system;
-          return `"${name}",${item.quantity_counted},${item.quantity_system},${diff}`;
+          const toBuy = item.to_buy ? "Sim" : "Não";
+          return `"${name}",${item.quantity_counted},${item.quantity_system},${diff},${toBuy}`;
         }),
       ].join("\n");
 
@@ -210,6 +211,7 @@ export default function ApprovalDetail() {
                 <th className="px-6 py-4 text-center">Estoque Sistema</th>
                 <th className="px-6 py-4 text-center">Contagem Física</th>
                 <th className="px-6 py-4 text-center">Diferença</th>
+                <th className="px-6 py-4 text-center">Comprar</th>
                 <th className="px-6 py-4 text-right">Status</th>
               </tr>
             </thead>
@@ -243,6 +245,14 @@ export default function ApprovalDetail() {
                         {diff > 0 ? "+" : ""}
                         {diff}
                       </span>
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      {item.to_buy && (
+                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-700">
+                          <ShoppingCart className="h-3 w-3" />
+                          Comprar
+                        </span>
+                      )}
                     </td>
                     <td className="px-6 py-4 text-right">
                       {hasDiff ? (

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { ArrowLeft, Save, Send, Search, Check } from "lucide-react";
+import { ArrowLeft, Save, Send, Search, Check, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -137,6 +137,7 @@ export default function CountingArea() {
 
   // UI States
   const [localInputs, setLocalInputs] = useState<Record<string, string>>({});
+  const [localToBuy, setLocalToBuy] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -212,10 +213,13 @@ export default function CountingArea() {
       setItems(initialItems);
 
       const inputsMap: Record<string, string> = {};
+      const toBuyMap: Record<string, boolean> = {};
       initialItems.forEach(i => {
         inputsMap[i.product_id] = i.quantity_counted === 0 ? "" : i.quantity_counted.toString();
+        toBuyMap[i.product_id] = i.to_buy ?? false;
       });
       setLocalInputs(inputsMap);
+      setLocalToBuy(toBuyMap);
 
       // Setup initial tab layout
       const firstCat = CATEGORY_ORDER[0];
@@ -233,6 +237,15 @@ export default function CountingArea() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleToBuyChange = (productId: string, value: boolean) => {
+    setLocalToBuy(prev => ({ ...prev, [productId]: value }));
+    setItems(prev =>
+      prev.map(item =>
+        item.product_id === productId ? { ...item, to_buy: value } : item
+      )
+    );
   };
 
   const handleQuantityChange = (productId: string, qty: string) => {
@@ -514,6 +527,21 @@ export default function CountingArea() {
                 <div className="text-sm text-gray-500 mt-1">
                   {product.unit} {product.code !== undefined ? `- Cód: ${product.code}` : ""}
                 </div>
+                <button
+                  className={cn(
+                    "mt-1.5 flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full border transition-colors",
+                    localToBuy[item.product_id]
+                      ? "bg-orange-100 text-orange-700 border-orange-300"
+                      : "bg-gray-50 text-gray-400 border-gray-200 hover:border-orange-200 hover:text-orange-500"
+                  )}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleToBuyChange(item.product_id, !localToBuy[item.product_id]);
+                  }}
+                >
+                  <ShoppingCart className="h-3 w-3" />
+                  Comprar
+                </button>
               </div>
               <div className="w-24 shrink-0" onClick={(e) => e.stopPropagation()}>
                 <Input

@@ -73,6 +73,7 @@ export const countingService = {
       product_id: item.product_id,
       quantity_counted: item.quantity_counted,
       quantity_system: item.quantity_system, // Keep original snapshot or update? Usually snapshot stays.
+      to_buy: item.to_buy ?? false,
     }));
 
     const { error } = await supabase
