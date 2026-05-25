@@ -27,17 +27,50 @@ export const reportService = {
       .gte("created_at", startDate)
       .lte("created_at", endDate);
 
-    // Find latest approved count in this period
-    const { data: counts } = await supabase
-      .from("stock_counts")
-      .select("*, items:stock_count_items(*)")
-      .eq("status", "approved")
-      .gte("created_at", startDate)
-      .order("created_at", { ascending: false })
-      .limit(1);
-
-    const latestCount = counts && counts.length > 0 ? counts[0] : null;
     const workingEntries = entries || [];
+
+    // Fetch stores to consolidate counts per store
+    const { data: stores } = await supabase.from("stores").select("id, code");
+
+    // Fetch the latest approved count for each store within the period
+    const latestCountByStore = new Map<string, any>();
+    for (const store of stores || []) {
+      const { data: c } = await supabase
+        .from("stock_counts")
+        .select("*, items:stock_count_items(*)")
+        .eq("status", "approved")
+        .eq("store_id", store.id)
+        .gte("created_at", startDate)
+        .order("created_at", { ascending: false })
+        .limit(1);
+      if (c && c.length > 0) {
+        latestCountByStore.set(store.id, c[0]);
+      }
+    }
+
+    // Helper to calculate consolidated final stock per product
+    const consolidatedFinalStock = (prod: any): {
+      total: number;
+      countedStores: number;
+    } => {
+      let total = 0;
+      let countedStores = 0;
+      for (const store of stores || []) {
+        const isActive = prod.active_status?.[store.id] !== false;
+        if (!isActive) continue;
+
+        const count = latestCountByStore.get(store.id);
+        const item = count?.items.find((i: any) => i.product_id === prod.id);
+        if (item) {
+          total += item.quantity_counted;
+          countedStores++;
+        } else {
+          // Fallback to store system stock if no count is found
+          total += prod.inventory?.[store.id] ?? 0;
+        }
+      }
+      return { total, countedStores };
+    };
 
     // 3. fetching initial stock from last report items if available
     let lastReportItems: any[] = [];
@@ -61,23 +94,17 @@ export const reportService = {
       );
       const entriesQty = productEntries.reduce((sum, e) => sum + e.quantity, 0);
 
-      // Final Stock (from Count or Current System if no count)
-      // Use count if available, otherwise fallback to current stock
-      //Ideally we enforce a count before closing, but for display:
-      const countedItem = latestCount?.items.find(
-        (i: any) => i.product_id === product.id,
-      );
-      const finalStock = countedItem
-        ? countedItem.quantity_counted
-        : product.current_stock;
+      // Final Stock (consolidated from approved counts per store)
+      const { total: finalStock, countedStores } = consolidatedFinalStock(product);
+      
+      const activeStores = (stores || []).filter(store => product.active_status?.[store.id] !== false).length;
+      const incomplete = countedStores < activeStores;
 
       // Consumption = Initial + Entries - Final
-      // Ensure non-negative?
-      // In reality, if Final > Initial + Entries, it means we gained stock (audit gain). Consumption would be negative.
-      // Let's allow negative for audit purposes, or clamp to 0?
-      // Usually consumption is positive. Negative consumption means "Gain".
       const consumptionQty = initialStock + entriesQty - finalStock;
-      const consumptionValue = consumptionQty * (product.average_cost || 0);
+      
+      // Valoração do consumo usando last_cost (o preço da última entrada) em vez de average_cost
+      const consumptionValue = consumptionQty * (product.last_cost || 0);
 
       return {
         product_id: product.id,
@@ -89,6 +116,9 @@ export const reportService = {
         final_stock: Number(finalStock.toFixed(3)),
         consumption_quantity: Number(consumptionQty.toFixed(3)),
         consumption_value: Number(consumptionValue.toFixed(2)),
+        incomplete,
+        counted_stores: countedStores,
+        active_stores: activeStores,
       };
     });
 
@@ -116,6 +146,7 @@ export const reportService = {
         start_date: report.start_date,
         end_date: report.end_date,
         total_consumption_value: report.total_consumption_value,
+        revenue_total: report.revenue_total || 0,
         status: "closed",
       })
       .select()

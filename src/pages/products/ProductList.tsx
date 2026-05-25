@@ -168,8 +168,8 @@ export default function ProductList() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-brand-brown">Produtos</h1>
-          <p className="text-gray-500">Gerencie o catálogo de produtos</p>
+          <h1 className="font-serif font-medium text-2xl tracking-tight text-ink">Produtos</h1>
+          <p className="text-sm text-ink-muted">Gerencie o catálogo de produtos</p>
         </div>
 
         {role === 'admin' && (
@@ -177,7 +177,7 @@ export default function ProductList() {
             <Button
               variant={editMode ? "primary" : "outline"}
               onClick={() => setEditMode(!editMode)}
-              className={editMode ? "bg-brand-brown" : ""}
+              className={editMode ? "bg-ink text-bg" : ""}
             >
               <Pencil className="h-4 w-4 mr-2" />
               {editMode ? "Concluir Edição" : "Edição Rápida"}
@@ -193,10 +193,10 @@ export default function ProductList() {
       </div>
 
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-ink-muted" />
         <Input
           placeholder="Buscar por nome ou código de barras..."
-          className="pl-10 max-w-md"
+          className="pl-10 max-w-md bg-transparent"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
@@ -205,50 +205,50 @@ export default function ProductList() {
       <Card className="overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">
-            <thead className="bg-gray-50 text-gray-700 font-medium border-b border-gray-100">
+            <thead className="bg-bg-soft text-ink-muted border-b border-rule-soft">
               <tr>
-                <th className="px-4 py-4 text-center w-16 cursor-pointer hover:bg-gray-100" onClick={() => handleSort('code')}>
-                  <div className="flex items-center justify-center gap-1 text-gray-500 font-medium">
+                <th className="px-4 py-4 text-center w-16 cursor-pointer hover:bg-bg-hover" onClick={() => handleSort('code')}>
+                  <div className="flex items-center justify-center gap-1 text-[0.74rem] font-semibold uppercase tracking-wider text-ink-muted">
                     Cód.
-                    <ArrowUpDown className="h-3 w-3 text-gray-400" />
+                    <ArrowUpDown className="h-3 w-3 text-ink-muted" />
                   </div>
                 </th>
-                <th className="px-6 py-4 cursor-pointer hover:bg-gray-100" onClick={() => handleSort('name')}>
-                  <div className="flex items-center gap-1">
+                <th className="px-6 py-4 cursor-pointer hover:bg-bg-hover" onClick={() => handleSort('name')}>
+                  <div className="flex items-center gap-1 text-[0.74rem] font-semibold uppercase tracking-wider text-ink-muted">
                     Produto
-                    <ArrowUpDown className="h-3 w-3 text-gray-400" />
+                    <ArrowUpDown className="h-3 w-3 text-ink-muted" />
                   </div>
                 </th>
-                <th className="px-6 py-4 cursor-pointer hover:bg-gray-100" onClick={() => handleSort('category')}>
-                  <div className="flex items-center gap-1">
+                <th className="px-6 py-4 cursor-pointer hover:bg-bg-hover" onClick={() => handleSort('category')}>
+                  <div className="flex items-center gap-1 text-[0.74rem] font-semibold uppercase tracking-wider text-ink-muted">
                     Categoria
-                    <ArrowUpDown className="h-3 w-3 text-gray-400" />
+                    <ArrowUpDown className="h-3 w-3 text-ink-muted" />
                   </div>
                 </th>
-                <th className="px-6 py-4 cursor-pointer hover:bg-gray-100" onClick={() => handleSort('subcategory')}>
-                  <div className="flex items-center gap-1">
+                <th className="px-6 py-4 cursor-pointer hover:bg-bg-hover" onClick={() => handleSort('subcategory')}>
+                  <div className="flex items-center gap-1 text-[0.74rem] font-semibold uppercase tracking-wider text-ink-muted">
                     Subcategoria
-                    <ArrowUpDown className="h-3 w-3 text-gray-400" />
+                    <ArrowUpDown className="h-3 w-3 text-ink-muted" />
                   </div>
                 </th>
-                <th className="px-6 py-4">Unidade</th>
-                <th className="px-6 py-4 text-center">Total</th>
+                <th className="px-6 py-4 text-[0.74rem] font-semibold uppercase tracking-wider text-ink-muted">Unidade</th>
+                <th className="px-6 py-4 text-center text-[0.74rem] font-semibold uppercase tracking-wider text-ink-muted">Total</th>
 
                 {stores.map(store => (
-                  <th key={store.id} className="px-6 py-4 text-center text-xs uppercase tracking-wider">
+                  <th key={store.id} className="px-6 py-4 text-center text-[0.74rem] font-semibold uppercase tracking-wider text-ink-muted">
                     {store.name}
                   </th>
                 ))}
 
-                {role === 'admin' && <th className="px-6 py-4 text-right">Ações</th>}
+                {role === 'admin' && <th className="px-6 py-4 text-right text-[0.74rem] font-semibold uppercase tracking-wider text-ink-muted">Ações</th>}
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-rule-soft">
               {loading ? (
                 <tr>
                   <td
-                    colSpan={role === 'admin' ? 6 : 5}
-                    className="px-6 py-8 text-center text-gray-500"
+                    colSpan={role === 'admin' ? 7 + stores.length : 6 + stores.length}
+                    className="px-6 py-8 text-center text-ink-muted"
                   >
                     Carregando produtos...
                   </td>
@@ -256,8 +256,8 @@ export default function ProductList() {
               ) : sortedProducts.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={role === 'admin' ? 6 : 5}
-                    className="px-6 py-8 text-center text-gray-500"
+                    colSpan={role === 'admin' ? 7 + stores.length : 6 + stores.length}
+                    className="px-6 py-8 text-center text-ink-muted"
                   >
                     Nenhum produto encontrado.
                   </td>
@@ -266,33 +266,33 @@ export default function ProductList() {
                 sortedProducts.map((product) => (
                   <tr
                     key={product.id}
-                    className="hover:bg-gray-50/50 transition-colors"
+                    className="hover:bg-bg-hover transition-colors"
                   >
-                    <td className="px-4 py-4 text-center text-xs text-gray-400 font-mono w-16">
+                    <td className="px-4 py-4 text-center text-xs text-ink-muted font-mono w-16">
                       {product.code ?? "-"}
                     </td>
                     <td className="px-6 py-4">
-                      <div className="font-medium text-gray-900">
+                      <div className="font-medium text-ink">
                         {product.name}
                       </div>
                       {product.barcode && (
-                        <div className="text-xs text-gray-500">
+                        <div className="text-xs text-ink-muted">
                           {product.barcode}
                         </div>
                       )}
                     </td>
                     <td className="px-6 py-4">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                      <span className="inline-block px-2 py-0.5 rounded-md border border-rule-soft bg-bg-card text-xs font-medium text-ink-soft">
                         {product.category}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-gray-600">
+                    <td className="px-6 py-4 text-ink-soft">
                       {getSubcategoryName(product.subcategory_id)}
                     </td>
-                    <td className="px-6 py-4 text-gray-600">{product.unit}</td>
+                    <td className="px-6 py-4 text-ink-soft">{product.unit}</td>
                     <td className="px-6 py-4 text-center">
                       <div className="flex flex-col items-center">
-                        <span className="font-medium text-gray-900">
+                        <span className="font-medium text-ink">
                           {product.current_stock}
                         </span>
                       </div>
@@ -305,32 +305,32 @@ export default function ProductList() {
                         const isLowStock = storeStock <= product.min_stock;
 
                         return (
-                          <td key={store.id} className="px-6 py-4 text-center text-gray-600">
+                          <td key={store.id} className="px-6 py-4 text-center text-ink-soft">
                             {editMode && role === 'admin' ? (
                               <button
                                 onClick={() => handleToggleStoreStatus(product.id, store.id, isActive)}
                                 className={cn(
-                                  "w-10 h-5 rounded-full relative transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-brand-brown focus:ring-offset-1 mx-auto block",
-                                  isActive ? "bg-brand-brown" : "bg-gray-200"
+                                  "w-10 h-5 rounded-full relative transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-ink focus:ring-offset-1 mx-auto block",
+                                  isActive ? "bg-ink" : "bg-bg-soft border border-rule-soft"
                                 )}
                               >
                                 <span
                                   className={cn(
-                                    "inline-block w-3 h-3 bg-white rounded-full transition-transform duration-200 ease-in-out absolute top-1",
-                                    isActive ? "translate-x-[22px] left-0" : "translate-x-1 left-0"
+                                    "inline-block w-3 h-3 rounded-full transition-transform duration-200 ease-in-out absolute top-1",
+                                    isActive ? "translate-x-[22px] left-0 bg-bg" : "translate-x-1 left-0 bg-ink-muted"
                                   )}
                                 />
                               </button>
                             ) : (
                               <div className="flex flex-col items-center">
                                 <span className={cn(
-                                  !isActive && "text-gray-300 line-through",
-                                  isActive && isLowStock ? "text-red-600 font-medium" : "text-gray-900"
+                                  !isActive && "text-ink-muted/40 line-through",
+                                  isActive && isLowStock ? "text-brand-rosa font-medium" : "text-ink"
                                 )}>
                                   {storeStock}
                                 </span>
                                 {isActive && isLowStock && (
-                                  <span className="flex items-center text-[10px] text-red-500 gap-1 mt-0.5">
+                                  <span className="flex items-center text-[10px] text-brand-rosa gap-1 mt-0.5">
                                     <AlertCircle className="h-3 w-3" />
                                     Baixo
                                   </span>
@@ -349,7 +349,7 @@ export default function ProductList() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                              className="h-8 w-8 p-0 text-ink-soft hover:text-ink hover:bg-bg-hover"
                               onClick={() => handleOpenQuickEdit(product)}
                             >
                               <Pencil className="h-4 w-4" />
@@ -359,7 +359,7 @@ export default function ProductList() {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                className="h-8 w-8 p-0 text-ink-soft hover:text-ink hover:bg-bg-hover"
                               >
                                 <Pencil className="h-4 w-4" />
                               </Button>
@@ -368,7 +368,7 @@ export default function ProductList() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                            className="h-8 w-8 p-0 text-brand-rosa hover:bg-brand-rosa/10"
                             onClick={() => handleDelete(product.id)}
                           >
                             <Trash2 className="h-4 w-4" />
@@ -385,26 +385,27 @@ export default function ProductList() {
       </Card >
       {/* Quick Edit Modal */}
       {quickEditProduct && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-sm p-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-bg/60 backdrop-blur-sm p-4">
+          <div className="bg-bg-card border border-rule-soft rounded-lg max-w-sm w-full p-6">
             <div className="flex items-center justify-between mb-5">
-              <h2 className="text-lg font-bold text-gray-900">Edição Rápida</h2>
-              <button onClick={() => setQuickEditProduct(null)} className="text-gray-400 hover:text-gray-600">
+              <h2 className="font-serif font-medium text-lg text-ink">Edição Rápida</h2>
+              <button onClick={() => setQuickEditProduct(null)} className="text-ink-muted hover:text-ink">
                 <X className="h-5 w-5" />
               </button>
             </div>
 
-            <p className="text-sm text-gray-500 mb-4 -mt-2 truncate">{quickEditProduct.name}</p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-ink-muted mb-4 -mt-2 truncate">{quickEditProduct.name}</p>
 
             <div className="space-y-4">
               {/* Unidade */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Unidade</label>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-ink-muted mb-1">Unidade</label>
                 <Input
                   list="unit-options"
                   value={qeForm.unit}
                   onChange={e => setQeForm(f => ({ ...f, unit: e.target.value }))}
                   placeholder="ex: kg, un, pct"
+                  className="bg-transparent"
                 />
                 <datalist id="unit-options">
                   {["kg", "un", "lt", "pct", "cx", "g", "ml"].map(u => (
@@ -415,33 +416,33 @@ export default function ProductList() {
 
               {/* Categoria */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Categoria</label>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-ink-muted mb-1">Categoria</label>
                 <select
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-brown/30"
+                  className="w-full bg-transparent border-0 border-b border-rule-soft focus:border-ink py-1.5 text-ink placeholder-ink-muted font-sans outline-none transition-colors"
                   value={qeForm.category_id}
                   onChange={e => setQeForm(f => ({ ...f, category_id: e.target.value, subcategory_id: "" }))}
                 >
-                  <option value="">Selecione...</option>
+                  <option value="" className="bg-bg-card">Selecione...</option>
                   {categories.map(c => (
-                    <option key={c.id} value={c.id}>{c.name}</option>
+                    <option key={c.id} value={c.id} className="bg-bg-card">{c.name}</option>
                   ))}
                 </select>
               </div>
 
               {/* Subcategoria */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Subcategoria</label>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-ink-muted mb-1">Subcategoria</label>
                 <select
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-brown/30 disabled:bg-gray-50 disabled:text-gray-400"
+                  className="w-full bg-transparent border-0 border-b border-rule-soft focus:border-ink py-1.5 text-ink placeholder-ink-muted font-sans outline-none transition-colors disabled:opacity-40"
                   value={qeForm.subcategory_id}
                   onChange={e => setQeForm(f => ({ ...f, subcategory_id: e.target.value }))}
                   disabled={!qeForm.category_id}
                 >
-                  <option value="">Selecione...</option>
+                  <option value="" className="bg-bg-card">Selecione...</option>
                   {subcategories
                     .filter(s => s.category_id === qeForm.category_id)
                     .map(s => (
-                      <option key={s.id} value={s.id}>{s.name}</option>
+                      <option key={s.id} value={s.id} className="bg-bg-card">{s.name}</option>
                     ))}
                 </select>
               </div>
@@ -452,7 +453,7 @@ export default function ProductList() {
                 Cancelar
               </Button>
               <Button
-                className="flex-1 bg-brand-brown hover:bg-brand-brown/90 text-white"
+                className="flex-1 bg-ink text-bg hover:bg-ink-soft hover:text-bg"
                 onClick={handleSaveQuickEdit}
                 disabled={qeSaving}
               >

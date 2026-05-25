@@ -161,7 +161,7 @@ export default function ProductForm() {
           </Button>
         </Link>
         <div>
-          <h1 className="text-2xl font-bold text-brand-brown">
+          <h1 className="font-serif font-medium text-2xl tracking-tight text-ink">
             {id ? "Editar Produto" : "Novo Produto"}
           </h1>
         </div>
@@ -175,10 +175,10 @@ export default function ProductForm() {
               <Input
                 id="name"
                 {...register("name")}
-                className={errors.name ? "border-red-500" : ""}
+                className={errors.name ? "border-brand-rosa bg-transparent" : "bg-transparent"}
               />
               {errors.name && (
-                <p className="text-xs text-red-500 mt-1">
+                <p className="text-xs text-brand-rosa mt-1">
                   {errors.name.message}
                 </p>
               )}
@@ -190,17 +190,17 @@ export default function ProductForm() {
                 <select
                   id="category_id"
                   {...register("category_id")}
-                  className="flex h-10 w-full rounded-md border border-gray-300 bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-yellow focus-visible:ring-offset-2"
+                  className="w-full bg-transparent border-0 border-b border-rule-soft focus:border-ink py-1.5 text-ink placeholder-ink-muted font-sans outline-none transition-colors"
                 >
-                  <option value="">Selecione...</option>
+                  <option value="" className="bg-bg-card">Selecione...</option>
                   {categories.map((cat) => (
-                    <option key={cat.id} value={cat.id}>
+                    <option key={cat.id} value={cat.id} className="bg-bg-card">
                       {cat.name}
                     </option>
                   ))}
                 </select>
                 {errors.category_id && (
-                  <p className="text-xs text-red-500 mt-1">
+                  <p className="text-xs text-brand-rosa mt-1">
                     {errors.category_id.message}
                   </p>
                 )}
@@ -211,12 +211,12 @@ export default function ProductForm() {
                 <select
                   id="subcategory_id"
                   {...register("subcategory_id")}
-                  className="flex h-10 w-full rounded-md border border-gray-300 bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-yellow focus-visible:ring-offset-2"
+                  className="w-full bg-transparent border-0 border-b border-rule-soft focus:border-ink py-1.5 text-ink placeholder-ink-muted font-sans outline-none transition-colors disabled:opacity-40"
                   disabled={!selectedCategoryId}
                 >
-                  <option value="">Selecione...</option>
+                  <option value="" className="bg-bg-card">Selecione...</option>
                   {subcategories.map((sub) => (
-                    <option key={sub.id} value={sub.id}>
+                    <option key={sub.id} value={sub.id} className="bg-bg-card">
                       {sub.name}
                     </option>
                   ))}
@@ -227,7 +227,7 @@ export default function ProductForm() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="barcode">Código de Barras (Opcional)</Label>
-                <Input id="barcode" {...register("barcode")} />
+                <Input id="barcode" {...register("barcode")} className="bg-transparent" />
               </div>
             </div>
 
@@ -239,6 +239,7 @@ export default function ProductForm() {
                   {...register("unit")}
                   placeholder="Ex: UN, KG, CX..."
                   list="units-list"
+                  className="bg-transparent"
                 />
                 <datalist id="units-list">
                   {units.map((u) => (
@@ -246,7 +247,7 @@ export default function ProductForm() {
                   ))}
                 </datalist>
                 {errors.unit && (
-                  <p className="text-xs text-red-500 mt-1">
+                  <p className="text-xs text-brand-rosa mt-1">
                     {errors.unit.message}
                   </p>
                 )}
@@ -259,10 +260,10 @@ export default function ProductForm() {
                   type="number"
                   step="0.001"
                   {...register("min_stock", { valueAsNumber: true })}
-                  className={errors.min_stock ? "border-red-500" : ""}
+                  className={errors.min_stock ? "border-brand-rosa bg-transparent" : "bg-transparent"}
                 />
                 {errors.min_stock && (
-                  <p className="text-xs text-red-500 mt-1">
+                  <p className="text-xs text-brand-rosa mt-1">
                     {errors.min_stock.message}
                   </p>
                 )}
@@ -270,13 +271,13 @@ export default function ProductForm() {
             </div>
           </div>
 
-          <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
+          <div className="flex justify-end gap-3 pt-4 border-t border-rule-soft">
             <Link to="/produtos">
               <Button type="button" variant="outline">
                 Cancelar
               </Button>
             </Link>
-            <Button type="submit" isLoading={loading}>
+            <Button type="submit" isLoading={loading} className="bg-ink text-bg hover:bg-ink-soft hover:text-bg">
               <Save className="h-4 w-4 mr-2" />
               Salvar Produto
             </Button>

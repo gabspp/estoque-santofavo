@@ -44,7 +44,7 @@ export const countingService = {
       count_id: count.id,
       product_id: p.id,
       quantity_counted: 0,
-      quantity_system: p.current_stock, // Note: This might need to be store-specific stock in future, but for now we snapshot global
+      quantity_system: p.inventory?.[storeId] ?? 0,
     }));
 
     // 3. Insert Items

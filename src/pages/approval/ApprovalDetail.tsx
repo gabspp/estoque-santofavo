@@ -150,7 +150,7 @@ export default function ApprovalDetail() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex items-center gap-4">
           <Link to="/aprovacao">
             <Button variant="ghost" size="sm">
@@ -159,11 +159,11 @@ export default function ApprovalDetail() {
             </Button>
           </Link>
           <div>
-            <h1 className="text-2xl font-bold text-brand-brown">
+            <h1 className="font-serif font-medium text-2xl tracking-tight text-ink">
               Revisão Contagem #{count.id.substring(0, 6)}
               {storeName && ` - ${storeName}`}
             </h1>
-            <p className="text-gray-500">
+            <p className="text-sm text-ink-muted mt-1">
               Realizada em{" "}
               {format(new Date(count.created_at), "dd 'de' MMMM 'às' HH:mm", {
                 locale: ptBR,
@@ -174,7 +174,7 @@ export default function ApprovalDetail() {
         <div className="flex flex-wrap items-center justify-end gap-3 mt-4 sm:mt-0">
           <Button
             variant="outline"
-            className="flex items-center"
+            className="flex items-center text-xs font-semibold uppercase tracking-wider text-ink"
             onClick={handleExportCSV}
             title="Download CSV"
           >
@@ -183,7 +183,7 @@ export default function ApprovalDetail() {
           </Button>
           <Button
             variant="outline"
-            className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+            className="text-brand-rosa hover:bg-brand-rosa/10 border-brand-rosa/20 text-xs font-semibold uppercase tracking-wider"
             onClick={handleReject}
             disabled={processing}
           >
@@ -191,11 +191,11 @@ export default function ApprovalDetail() {
             <span className="hidden sm:inline">Rejeitar</span>
           </Button>
           <Button
-            className="bg-green-600 hover:bg-green-700 text-white"
+            className="bg-ink text-bg hover:bg-ink-soft hover:text-bg text-xs font-semibold uppercase tracking-wider"
             onClick={handleApprove}
             disabled={processing}
           >
-            <CheckCircle className="h-4 w-4 sm:mr-2" />
+            <CheckCircle className="h-4 w-4 sm:mr-2 text-brand-verde" />
             <span className="hidden sm:inline">Aprovar e Atualizar Estoque</span>
           </Button>
         </div>
@@ -205,41 +205,41 @@ export default function ApprovalDetail() {
       <Card className="overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">
-            <thead className="bg-gray-50 text-gray-700 font-medium border-b border-gray-100">
+            <thead className="bg-bg-soft text-ink-muted border-b border-rule-soft">
               <tr>
-                <th className="px-6 py-4">Produto</th>
-                <th className="px-6 py-4 text-center">Estoque Sistema</th>
-                <th className="px-6 py-4 text-center">Contagem Física</th>
-                <th className="px-6 py-4 text-center">Diferença</th>
-                <th className="px-6 py-4 text-center">Comprar</th>
-                <th className="px-6 py-4 text-right">Status</th>
+                <th className="px-6 py-4 text-[0.74rem] font-semibold uppercase tracking-wider text-ink-muted">Produto</th>
+                <th className="px-6 py-4 text-center text-[0.74rem] font-semibold uppercase tracking-wider text-ink-muted">Estoque Sistema</th>
+                <th className="px-6 py-4 text-center text-[0.74rem] font-semibold uppercase tracking-wider text-ink-muted">Contagem Física</th>
+                <th className="px-6 py-4 text-center text-[0.74rem] font-semibold uppercase tracking-wider text-ink-muted">Diferença</th>
+                <th className="px-6 py-4 text-center text-[0.74rem] font-semibold uppercase tracking-wider text-ink-muted">Comprar</th>
+                <th className="px-6 py-4 text-right text-[0.74rem] font-semibold uppercase tracking-wider text-ink-muted">Status</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-rule-soft">
               {count.items.map((item) => {
                 const diff = item.quantity_counted - item.quantity_system;
                 const hasDiff = diff !== 0;
 
                 return (
-                  <tr key={item.product_id} className="hover:bg-gray-50/50">
-                    <td className="px-6 py-4 font-medium text-gray-900">
+                  <tr key={item.product_id} className="hover:bg-bg-hover">
+                    <td className="px-6 py-4 font-medium text-ink">
                       {getProductName(item.product_id)}
                     </td>
-                    <td className="px-6 py-4 text-center text-gray-500 bg-gray-50/50">
+                    <td className="px-6 py-4 text-center text-ink-soft bg-bg-soft/20">
                       {item.quantity_system}
                     </td>
-                    <td className="px-6 py-4 text-center font-bold">
+                    <td className="px-6 py-4 text-center font-semibold text-ink">
                       {item.quantity_counted}
                     </td>
                     <td className="px-6 py-4 text-center">
                       <span
                         className={cn(
-                          "inline-block px-2 py-1 rounded text-xs font-medium min-w-[3rem]",
+                          "inline-block px-2.5 py-0.5 rounded-md text-xs font-semibold min-w-[3rem]",
                           diff === 0
-                            ? "bg-gray-100 text-gray-600"
+                            ? "bg-bg text-ink-muted border border-rule-soft"
                             : diff > 0
-                              ? "bg-green-100 text-green-700"
-                              : "bg-red-100 text-red-700",
+                              ? "bg-brand-verde/20 text-brand-marrom-escuro border border-brand-verde/30"
+                              : "bg-brand-rosa/20 text-brand-marrom-escuro border border-brand-rosa/30",
                         )}
                       >
                         {diff > 0 ? "+" : ""}
@@ -248,21 +248,21 @@ export default function ApprovalDetail() {
                     </td>
                     <td className="px-6 py-4 text-center">
                       {item.to_buy && (
-                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-700">
-                          <ShoppingCart className="h-3 w-3" />
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md border border-rule-soft bg-bg-card text-xs font-medium text-ink-soft">
+                          <ShoppingCart className="h-3 w-3 text-ink-muted" />
                           Comprar
                         </span>
                       )}
                     </td>
                     <td className="px-6 py-4 text-right">
                       {hasDiff ? (
-                        <span className="flex items-center justify-end gap-1 text-yellow-600 text-xs font-medium">
-                          <AlertTriangle className="h-3 w-3" />
+                        <span className="flex items-center justify-end gap-1 text-brand-rosa text-xs font-medium">
+                          <AlertTriangle className="h-3 w-3 text-brand-rosa" />
                           Divergência
                         </span>
                       ) : (
-                        <span className="flex items-center justify-end gap-1 text-green-600 text-xs font-medium">
-                          <CheckCircle className="h-3 w-3" />
+                        <span className="flex items-center justify-end gap-1 text-brand-verde text-xs font-medium">
+                          <CheckCircle className="h-3 w-3 text-brand-verde" />
                           Ok
                         </span>
                       )}
@@ -275,10 +275,10 @@ export default function ApprovalDetail() {
         </div>
       </Card>
 
-      <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 flex gap-3 text-sm text-blue-800">
-        <AlertTriangle className="h-5 w-5 shrink-0" />
+      <div className="bg-brand-rosa/10 border border-brand-rosa/20 rounded-lg p-4 flex gap-3 text-sm text-ink-soft">
+        <AlertTriangle className="h-5 w-5 shrink-0 text-brand-rosa" />
         <div>
-          <p className="font-semibold">Atenção</p>
+          <p className="font-semibold text-ink">Atenção</p>
           <p>
             Ao aprovar esta contagem, o estoque do sistema será{" "}
             <strong>substituído</strong> pelos valores da coluna "Contagem

@@ -56,37 +56,37 @@ export default function UserManagement() {
 
     return (
         <div className="space-y-6">
-            <h1 className="text-2xl font-bold text-brand-brown">Gestão de Usuários</h1>
+            <h1 className="font-serif font-medium text-2xl tracking-tight text-ink">Gestão de Usuários</h1>
 
             <Card>
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <Users className="h-5 w-5" />
+                    <CardTitle className="font-serif font-medium text-xl tracking-tight text-ink flex items-center gap-2">
+                        <Users className="h-5 w-5 text-ink-soft" />
                         Usuários Cadastrados
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
                     {loading ? (
-                        <div className="text-center py-4">Carregando...</div>
+                        <div className="text-center py-4 text-ink-muted">Carregando...</div>
                     ) : (
                         <div className="space-y-4">
                             {profiles.map(profile => (
-                                <div key={profile.id} className="flex items-center justify-between p-4 border rounded-lg bg-white shadow-sm">
+                                <div key={profile.id} className="flex items-center justify-between p-4 border border-rule-soft rounded-lg bg-bg-card">
                                     <div className="space-y-1">
-                                        <p className="font-medium">{profile.email}</p>
-                                        <div className="flex items-center gap-1.5">
+                                        <p className="font-medium text-ink">{profile.email}</p>
+                                        <div className="flex flex-wrap items-center gap-2">
                                             {profile.role === 'admin' ? (
-                                                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800">
-                                                    <Shield className="w-3 h-3 mr-1" />
+                                                <span className="inline-flex items-center px-2 py-0.5 rounded-md border border-rule-soft bg-brand-roxo/10 text-[0.74rem] font-medium text-ink-soft">
+                                                    <Shield className="w-3 h-3 mr-1 text-ink-soft" />
                                                     Administrador
                                                 </span>
                                             ) : (
-                                                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
-                                                    <Users className="w-3 h-3 mr-1" />
+                                                <span className="inline-flex items-center px-2 py-0.5 rounded-md border border-rule-soft bg-bg text-[0.74rem] font-medium text-ink-muted">
+                                                    <Users className="w-3 h-3 mr-1 text-ink-muted" />
                                                     Funcionário
                                                 </span>
                                             )}
-                                            <span className="text-xs text-gray-500">
+                                            <span className="text-xs text-ink-muted">
                                                 Criado em: {new Date(profile.created_at).toLocaleDateString()}
                                             </span>
                                         </div>
@@ -103,7 +103,7 @@ export default function UserManagement() {
                             ))}
 
                             {profiles.length === 0 && (
-                                <p className="text-gray-500 text-center py-4">Nenhum usuário encontrado.</p>
+                                <p className="text-ink-muted text-center py-4">Nenhum usuário encontrado.</p>
                             )}
                         </div>
                     )}

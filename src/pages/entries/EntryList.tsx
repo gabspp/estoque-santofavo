@@ -47,10 +47,10 @@ export default function EntryList() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-brand-brown">
+          <h1 className="font-serif font-medium text-2xl tracking-tight text-ink">
             Entradas de Estoque
           </h1>
-          <p className="text-gray-500">
+          <p className="text-sm text-ink-muted">
             Registre novas compras e visualize o histórico
           </p>
         </div>
@@ -71,10 +71,10 @@ export default function EntryList() {
       </div>
 
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-ink-muted" />
         <Input
           placeholder="Buscar por nome do produto..."
-          className="pl-10 max-w-md"
+          className="pl-10 max-w-md bg-transparent"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
@@ -83,21 +83,21 @@ export default function EntryList() {
       <Card className="overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">
-            <thead className="bg-gray-50 text-gray-700 font-medium border-b border-gray-100">
+            <thead className="bg-bg-soft text-ink-muted border-b border-rule-soft">
               <tr>
-                <th className="px-6 py-4">Data</th>
-                <th className="px-6 py-4">Produto</th>
-                <th className="px-6 py-4 text-center">Quantidade</th>
-                <th className="px-6 py-4 text-right">Preço Custo</th>
-                <th className="px-6 py-4 text-right">Total</th>
+                <th className="px-6 py-4 text-[0.74rem] font-semibold uppercase tracking-wider text-ink-muted">Data</th>
+                <th className="px-6 py-4 text-[0.74rem] font-semibold uppercase tracking-wider text-ink-muted">Produto</th>
+                <th className="px-6 py-4 text-center text-[0.74rem] font-semibold uppercase tracking-wider text-ink-muted">Quantidade</th>
+                <th className="px-6 py-4 text-right text-[0.74rem] font-semibold uppercase tracking-wider text-ink-muted">Preço Custo</th>
+                <th className="px-6 py-4 text-right text-[0.74rem] font-semibold uppercase tracking-wider text-ink-muted">Total</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-rule-soft">
               {loading ? (
                 <tr>
                   <td
                     colSpan={5}
-                    className="px-6 py-8 text-center text-gray-500"
+                    className="px-6 py-8 text-center text-ink-muted"
                   >
                     Carregando entradas...
                   </td>
@@ -106,7 +106,7 @@ export default function EntryList() {
                 <tr>
                   <td
                     colSpan={5}
-                    className="px-6 py-8 text-center text-gray-500"
+                    className="px-6 py-8 text-center text-ink-muted"
                   >
                     Nenhuma entrada registrada.
                   </td>
@@ -115,29 +115,29 @@ export default function EntryList() {
                 filteredEntries.map((entry) => (
                   <tr
                     key={entry.id}
-                    className="hover:bg-gray-50/50 transition-colors"
+                    className="hover:bg-bg-hover transition-colors"
                   >
-                    <td className="px-6 py-4 text-gray-600">
+                    <td className="px-6 py-4 text-ink-soft">
                       {format(new Date(entry.created_at), "dd/MM/yyyy HH:mm", {
                         locale: ptBR,
                       })}
                     </td>
-                    <td className="px-6 py-4 font-medium text-gray-900">
+                    <td className="px-6 py-4 font-medium text-ink">
                       {getProductName(entry.product_id)}
                     </td>
                     <td className="px-6 py-4 text-center">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                        <ArrowUpRight className="h-3 w-3 mr-1" />+
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-md border border-rule-soft bg-bg-card text-xs font-medium text-brand-marrom-escuro">
+                        <ArrowUpRight className="h-3 w-3 mr-1 text-brand-verde" />+
                         {entry.quantity}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-right text-gray-600">
+                    <td className="px-6 py-4 text-right text-ink-soft">
                       {new Intl.NumberFormat("pt-BR", {
                         style: "currency",
                         currency: "BRL",
                       }).format(entry.cost_price)}
                     </td>
-                    <td className="px-6 py-4 text-right font-medium text-gray-900">
+                    <td className="px-6 py-4 text-right font-medium text-ink">
                       {new Intl.NumberFormat("pt-BR", {
                         style: "currency",
                         currency: "BRL",
