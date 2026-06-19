@@ -116,14 +116,21 @@ export default function ApprovalDetail() {
     if (!count) return;
     try {
       const nameStore = storeName || "Geral";
+      const formatNum = (n: number) => String(n).replace(".", ",");
+      const sortedItems = [...count.items].sort((a, b) => {
+        const nameA = products.find((p) => p.id === a.product_id)?.name ?? "";
+        const nameB = products.find((p) => p.id === b.product_id)?.name ?? "";
+        return nameA.localeCompare(nameB, "pt-BR");
+      });
+
       const csvContent = [
-        ["Produto", "Quantidade Contada", "Quantidade Sistema", "Diferença", "Comprar"],
-        ...count.items.map((item) => {
+        ["Produto", "Quantidade Contada", "Quantidade Sistema", "Diferença", "Comprar"].join(";"),
+        ...sortedItems.map((item) => {
           const product = products.find((p) => p.id === item.product_id);
           const name = product ? product.name : "Produto Desconhecido";
           const diff = item.quantity_counted - item.quantity_system;
           const toBuy = item.to_buy ? "Sim" : "Não";
-          return `"${name}",${item.quantity_counted},${item.quantity_system},${diff},${toBuy}`;
+          return `"${name}";${formatNum(item.quantity_counted)};${formatNum(item.quantity_system)};${formatNum(diff)};${toBuy}`;
         }),
       ].join("\n");
 
