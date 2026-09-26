@@ -88,8 +88,17 @@ export default function ProductList() {
 
   const handleDelete = async (id: string) => {
     if (confirm("Tem certeza que deseja excluir este produto?")) {
-      await productService.deleteProduct(id);
-      loadData(); // Reload to refresh list
+      try {
+        await productService.deleteProduct(id);
+        loadData(); // Reload to refresh list
+      } catch (e) {
+        console.error("Erro ao excluir produto", e);
+        alert(
+          `Não foi possível excluir o produto: ${
+            e instanceof Error ? e.message : "erro desconhecido"
+          }`,
+        );
+      }
     }
   };
 
