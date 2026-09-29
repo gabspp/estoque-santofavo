@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
-
-import { ShoppingCart, Download, Printer, Search } from "lucide-react";
+import { Download, Printer, Search, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -8,6 +7,7 @@ import { productService } from "@/services/productService";
 import { storeService } from "@/services/storeService";
 import { type Product, type Store } from "@/types";
 import { exportToCSV } from "@/utils/export";
+
 
 export default function ShoppingList() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -107,26 +107,29 @@ export default function ShoppingList() {
   };
 
   if (loading)
-    return <div className="p-8 text-center">Carregando lista...</div>;
+    return <div className="p-8 text-center text-ink-muted font-medium">Carregando lista de compras...</div>;
 
   return (
-    <div className="space-y-6 print:space-y-4">
-      {/* Header - Hidden on print if desired, or styled differently */}
+    <div className="space-y-6 print:space-y-4 font-sans select-none">
+      {/* Header - Hidden on print */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 print:hidden">
         <div>
-          <h1 className="text-2xl font-bold text-brand-brown">
+          <h1 className="font-serif text-2xl font-medium tracking-tight text-ink">
             Lista de Compras
           </h1>
-          <p className="text-gray-500">Produtos com estoque baixo ou zerado por loja</p>
+          <p className="text-xs text-ink-muted font-medium uppercase tracking-wider mt-0.5">
+            Produtos com estoque abaixo do mínimo de segurança agrupados por loja
+          </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={handlePrint}>
+          <Button variant="outline" onClick={handlePrint} className="h-9 text-xs">
             <Printer className="h-4 w-4 mr-2" />
             Imprimir
           </Button>
           <Button
             onClick={handleExport}
             disabled={!hasAnyItems}
+            className="h-9 text-xs"
           >
             <Download className="h-4 w-4 mr-2" />
             Exportar CSV
@@ -135,54 +138,61 @@ export default function ShoppingList() {
       </div>
 
       {/* Print-only Header */}
-      <div className="hidden print:block mb-4">
-        <h1 className="text-xl font-bold">Lista de Reposição - Santo Favo</h1>
-        <p className="text-sm">Gerado em {new Date().toLocaleDateString()}</p>
+      <div className="hidden print:block mb-4 border-b border-rule pb-2">
+        <h1 className="font-serif text-2xl font-medium text-ink">Lista de Reposição de Estoque · Santo Favo</h1>
+        <p className="text-xs text-ink-muted font-bold uppercase tracking-wider mt-0.5">Gerado em {new Date().toLocaleDateString()}</p>
       </div>
 
+      {/* Search Filter - Hidden on print */}
       <div className="flex gap-4 items-center print:hidden">
         <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
+          <Search className="absolute left-3 top-2.5 h-4 w-4 text-ink-muted" />
           <Input
-            placeholder="Buscar produto ou categoria..."
-            className="pl-8"
+            placeholder="Pesquise por produto ou grupo..."
+            className="pl-9 h-9 text-xs"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
       </div>
 
-      <div className="space-y-8">
+      {/* Grouped Data Lists */}
+      <div className="space-y-8 print:space-y-6">
         {hasAnyItems ? (
           groupedData.map(({ store, categories }) => (
-            <div key={store.id} className="space-y-4 border rounded-xl overflow-hidden print:border-none print:space-y-2">
-              <div className="bg-brand-brown text-white px-6 py-4 print:bg-gray-100 print:text-black print:py-2">
-                <h2 className="text-xl font-bold">{store.name}</h2>
+            <div key={store.id} className="space-y-4 border border-rule-soft rounded-lg overflow-hidden print:border-none print:space-y-3">
+              {/* Store Title Bar - Glassy look on screen, simple clean layout on print */}
+              <div className="bg-bg-soft/75 px-5 py-3 border-b border-rule-soft flex justify-between items-center print:bg-transparent print:border-b-2 print:border-ink print:px-0 print:py-1">
+                <h2 className="font-serif text-lg font-semibold text-ink print:text-md print:font-bold">{store.name}</h2>
               </div>
 
-              <div className="p-4 space-y-6 print:p-0">
+              <div className="p-4 space-y-6 print:p-0 print:space-y-4">
                 {Object.entries(categories).map(([category, catProducts]) => (
-                  <div key={category} className="space-y-4 print:space-y-2 print:border-b print:border-gray-200 print:pb-4">
-                    <h3 className="text-lg font-semibold text-gray-800 border-b pb-2 px-2 print:text-md">
-                      {category}
-                    </h3>
+                  <div key={category} className="space-y-3 print:space-y-2">
+                    {/* Category Title Section Head */}
+                    <div className="flex items-baseline justify-between gap-3 pb-1 border-b border-rule-soft select-none print:border-rule">
+                      <h3 className="font-sans font-semibold text-[0.74rem] uppercase tracking-widest text-ink-soft print:text-xs">
+                        {category}
+                      </h3>
+                      <span className="text-[10px] font-bold text-ink-muted uppercase print:text-[9px]">
+                        {catProducts.length} itens
+                      </span>
+                    </div>
 
-                    <Card className="overflow-hidden shadow-sm border print:shadow-none print:border-none">
+                    <Card className="overflow-hidden print:border-none">
                       <div className="overflow-x-auto">
-                        <table className="w-full text-sm text-left">
-                          <thead className="bg-gray-50 text-gray-700 font-medium border-b border-gray-100 print:bg-white print:border-black">
+                        <table className="w-full text-sm text-left border-collapse">
+                          <thead className="bg-bg-soft/20 border-b border-rule-soft print:border-ink">
                             <tr>
-                              <th className="px-6 py-3">Produto</th>
-                              <th className="px-6 py-3 text-center">Referência</th>
-                              <th className="px-6 py-3 text-center">Unidade</th>
-                              <th className="px-6 py-3 text-center">Estoque Atual</th>
-                              <th className="px-6 py-3 text-center">Mínimo</th>
-                              <th className="px-6 py-3 text-center font-bold text-gray-900">
-                                Sugestão
-                              </th>
+                              <th className="px-5 py-2.5 font-sans font-semibold text-xs uppercase tracking-wider text-ink-muted">Produto</th>
+                              <th className="px-5 py-2.5 text-center font-sans font-semibold text-xs uppercase tracking-wider text-ink-muted">Referência</th>
+                              <th className="px-5 py-2.5 text-center font-sans font-semibold text-xs uppercase tracking-wider text-ink-muted">Unidade</th>
+                              <th className="px-5 py-2.5 text-center font-sans font-semibold text-xs uppercase tracking-wider text-ink-muted">Estoque</th>
+                              <th className="px-5 py-2.5 text-center font-sans font-semibold text-xs uppercase tracking-wider text-ink-muted">Mínimo</th>
+                              <th className="px-5 py-2.5 text-center font-sans font-bold text-xs uppercase tracking-wider text-ink">Sugestão</th>
                             </tr>
                           </thead>
-                          <tbody className="divide-y divide-gray-100 print:divide-gray-300">
+                          <tbody className="divide-y divide-rule-soft print:divide-rule-soft">
                             {catProducts.map((product) => {
                               const storeStock = product.inventory?.[store.id] ?? 0;
                               const suggestion = Math.ceil(
@@ -193,37 +203,35 @@ export default function ShoppingList() {
                               return (
                                 <tr
                                   key={product.id}
-                                  className="hover:bg-gray-50/50 print:hover:bg-white"
+                                  className="hover:bg-bg-hover transition-colors print:hover:bg-transparent"
                                 >
-                                  <td className="px-6 py-3">
-                                    <div className="font-medium text-gray-900">
+                                  <td className="px-5 py-2.5">
+                                    <div className="font-medium text-ink">
                                       {product.name}
                                     </div>
                                   </td>
-                                  <td className="px-6 py-3 text-center text-xs text-gray-500">
+                                  <td className="px-5 py-2.5 text-center text-xs text-ink-muted">
                                     {product.barcode || "-"}
                                   </td>
-                                  <td className="px-6 py-3 text-center text-gray-500">
+                                  <td className="px-5 py-2.5 text-center text-ink-soft">
                                     {product.unit}
                                   </td>
-                                  <td className="px-6 py-3 text-center font-medium">
+                                  <td className="px-5 py-2.5 text-center font-semibold">
                                     <span
                                       className={
                                         isCritical
-                                          ? "text-red-600 font-bold"
-                                          : "text-gray-900"
+                                          ? "text-brand-rosa font-bold"
+                                          : "text-ink"
                                       }
                                     >
                                       {storeStock}
                                     </span>
                                   </td>
-                                  <td className="px-6 py-3 text-center text-gray-500">
+                                  <td className="px-5 py-2.5 text-center text-ink-muted">
                                     {product.min_stock}
                                   </td>
-                                  <td className="px-6 py-3 text-center">
-                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 print:border print:border-gray-300">
-                                      {Math.max(0, suggestion)}
-                                    </span>
+                                  <td className="px-5 py-2.5 text-center font-bold text-ink bg-bg-soft/10">
+                                    {Math.max(0, suggestion)}
                                   </td>
                                 </tr>
                               );
@@ -238,13 +246,11 @@ export default function ShoppingList() {
             </div>
           ))
         ) : (
-          <Card className="overflow-hidden print:shadow-none print:border-none">
-            <div className="px-6 py-12 text-center text-gray-500">
-              <div className="flex flex-col items-center justify-center gap-2">
-                <ShoppingCart className="h-8 w-8 text-gray-300" />
-                <p>Nenhum produto precisando de reposição no momento.</p>
-                <p className="text-xs">Ou ajuste os filtros de busca.</p>
-              </div>
+          <Card className="p-12 text-center text-ink-muted font-medium bg-bg-card rounded-lg border border-rule-soft border-dashed">
+            <div className="flex flex-col items-center justify-center gap-3">
+              <ShoppingCart className="h-8 w-8 text-ink-muted opacity-50" />
+              <p className="text-base text-ink">Nenhum produto precisando de reposição no momento.</p>
+              <p className="text-xs text-ink-muted uppercase font-bold tracking-wider">O estoque de todas as lojas está acima do mínimo.</p>
             </div>
           </Card>
         )}

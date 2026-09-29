@@ -96,6 +96,9 @@ export interface WeeklyReportItem {
   final_stock: number; // From physical count
   consumption_quantity: number; // (Initial + Entries) - Final
   consumption_value: number;
+  incomplete?: boolean;
+  counted_stores?: number;
+  active_stores?: number;
 }
 
 export interface WeeklyReport {
@@ -104,6 +107,7 @@ export interface WeeklyReport {
   end_date: string;
   status: "open" | "closed";
   total_consumption_value: number;
+  revenue_total?: number;
   items: WeeklyReportItem[];
   created_at: string;
 }

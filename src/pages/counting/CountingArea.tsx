@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { ArrowLeft, Save, Send, Search, Check, ShoppingCart } from "lucide-react";
+import { ArrowLeft, Save, Send, Search, Check, ShoppingCart, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -67,55 +67,6 @@ const SUBCATEGORY_ORDER: Record<string, string[]> = {
   ]
 };
 
-const CATEGORY_COLORS: Record<string, { base: string; active: string; completed: string }> = {
-  confeitaria: {
-    base: "bg-amber-50 text-amber-800 border-amber-200 hover:bg-amber-100",
-    active: "bg-amber-500 text-white shadow-md border-amber-500",
-    completed: "bg-amber-100 text-amber-700 border-amber-300",
-  },
-  salgado: {
-    base: "bg-rose-50 text-rose-800 border-rose-200 hover:bg-rose-100",
-    active: "bg-rose-500 text-white shadow-md border-rose-500",
-    completed: "bg-rose-100 text-rose-700 border-rose-300",
-  },
-  bar: {
-    base: "bg-violet-50 text-violet-800 border-violet-200 hover:bg-violet-100",
-    active: "bg-violet-500 text-white shadow-md border-violet-500",
-    completed: "bg-violet-100 text-violet-700 border-violet-300",
-  },
-  embalagem: {
-    base: "bg-sky-50 text-sky-800 border-sky-200 hover:bg-sky-100",
-    active: "bg-sky-500 text-white shadow-md border-sky-500",
-    completed: "bg-sky-100 text-sky-700 border-sky-300",
-  },
-  consumo: {
-    base: "bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100",
-    active: "bg-emerald-500 text-white shadow-md border-emerald-500",
-    completed: "bg-emerald-100 text-emerald-700 border-emerald-300",
-  },
-  apoio: {
-    base: "bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200",
-    active: "bg-slate-500 text-white shadow-md border-slate-500",
-    completed: "bg-slate-200 text-slate-700 border-slate-300",
-  },
-};
-
-const getTabColor = (parentCategory: string, active: boolean, completed: boolean): string => {
-  const n = parentCategory.toLowerCase();
-  const scheme =
-    n.includes("salgado") ? CATEGORY_COLORS.salgado :
-      n.includes("bar") ? CATEGORY_COLORS.bar :
-        n.includes("confeitaria") || n.includes("insumo") ? CATEGORY_COLORS.confeitaria :
-          n.includes("embalagem") ? CATEGORY_COLORS.embalagem :
-            n.includes("consumo") ? CATEGORY_COLORS.consumo :
-              CATEGORY_COLORS.apoio;
-
-  if (completed && active) return scheme.active;
-  if (completed) return scheme.completed;
-  if (active) return scheme.active;
-  return scheme.base;
-};
-
 export default function CountingArea() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -131,29 +82,52 @@ export default function CountingArea() {
   // Filter states
   const [searchTerm, setSearchTerm] = useState("");
   const [activeCategory, setActiveCategory] = useState<string>("");
-  const [activeSubcategory, setActiveSubcategory] = useState<string>("");
   const [storeName, setStoreName] = useState<string>("");
   const [completedSubcategories, setCompletedSubcategories] = useState<string[]>([]);
 
   // UI States
   const [localInputs, setLocalInputs] = useState<Record<string, string>>({});
   const [localToBuy, setLocalToBuy] = useState<Record<string, boolean>>({});
+  const [focusedProductId, setFocusedProductId] = useState<string | null>(null);
+  const [showOnlyPending, setShowOnlyPending] = useState(false);
+  const [autoSaveStatus, setAutoSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const isInitialMount = useRef(true);
+
+  // Debounced Auto-Save
+  useEffect(() => {
+    if (loading || !id) return;
+
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+
+    setAutoSaveStatus("saving");
+    const delayDebounceFn = setTimeout(async () => {
+      try {
+        await countingService.updateCount(id, items, completedSubcategories);
+        setAutoSaveStatus("saved");
+      } catch (error) {
+        console.error("Auto-save error:", error);
+        setAutoSaveStatus("error");
+      }
+    }, 2000); // 2 seconds debounce
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [items, id, completedSubcategories, loading]);
 
   useEffect(() => {
     const interval = setInterval(() => {
       toast({
         title: "Lembrete",
-        description: "Lembre-se de salvar o rascunho periodicamente para não perder seu progresso.",
+        description: "Seu progresso de contagem é salvo automaticamente no banco de dados.",
       });
     }, 10 * 60 * 1000); // 10 minutes
 
     return () => clearInterval(interval);
   }, [toast]);
 
-  useEffect(() => {
-    if (id) loadData(id);
-  }, [id]);
-
+  // Load Main Data
   const loadData = async (countId: string) => {
     try {
       const [countData, productsData, subcatsData] = await Promise.all([
@@ -221,12 +195,8 @@ export default function CountingArea() {
       setLocalInputs(inputsMap);
       setLocalToBuy(toBuyMap);
 
-      // Setup initial tab layout
-      const firstCat = CATEGORY_ORDER[0];
-      const firstSubcat = SUBCATEGORY_ORDER[firstCat]?.[0] || "";
-
-      setActiveCategory(firstCat);
-      setActiveSubcategory(firstSubcat);
+      // Setup initial active category
+      setActiveCategory(CATEGORY_ORDER[0]);
     } catch (error) {
       console.error("Error loading data:", error);
       toast({
@@ -238,6 +208,10 @@ export default function CountingArea() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (id) loadData(id);
+  }, [id]);
 
   const handleToBuyChange = (productId: string, value: boolean) => {
     setLocalToBuy(prev => ({ ...prev, [productId]: value }));
@@ -261,16 +235,33 @@ export default function CountingArea() {
     );
   };
 
-  const handleSave = async (silent = false, extraCompleted?: string[]) => {
+  const toggleSubcategoryCompleted = (subcatName: string) => {
+    setCompletedSubcategories((prev) => {
+      const isCompleted = prev.includes(subcatName);
+      const nextList = isCompleted
+        ? prev.filter((s) => s !== subcatName)
+        : [...prev, subcatName];
+      
+      toast({
+        title: isCompleted ? "Subcategoria reaberta" : "Subcategoria conferida! ✓",
+        description: isCompleted 
+          ? `${subcatName} foi reaberta para ajustes.` 
+          : `${subcatName} foi marcada como concluída.`,
+        variant: isCompleted ? "default" : "success",
+      });
+      return nextList;
+    });
+  };
+
+  const handleSave = async (silent = false) => {
     if (!id) return;
     setSaving(true);
     try {
-      const newCompleted = extraCompleted || completedSubcategories;
-      await countingService.updateCount(id, items, newCompleted);
+      await countingService.updateCount(id, items, completedSubcategories);
       if (!silent) {
         toast({
-          title: "Rascunho salvo",
-          description: "O progresso foi salvo com sucesso.",
+          title: "Progresso salvo com sucesso! 💾",
+          description: "Seu rascunho de contagem foi atualizado.",
           variant: "success",
         });
       }
@@ -279,7 +270,7 @@ export default function CountingArea() {
       if (!silent) {
         toast({
           title: "Erro ao salvar",
-          description: "Não foi possível salvar o rascunho.",
+          description: "Não foi possível conectar ao banco de dados.",
           variant: "destructive",
         });
       }
@@ -290,22 +281,31 @@ export default function CountingArea() {
 
   const handleFinalize = async () => {
     if (!id) return;
-    if (
-      !confirm(
-        "Deseja realmente finalizar a contagem? Essa ação enviará para aprovação.",
-      )
-    )
-      return;
+
+    // Check for leftovers/uncounted items in the whole checklist
+    const uncountedCount = items.filter(
+      (item) => localInputs[item.product_id] === "" || localInputs[item.product_id] === undefined
+    ).length;
+
+    if (uncountedCount > 0) {
+      if (
+        !confirm(
+          `Atenção: Faltam ${uncountedCount} itens não contados! Eles serão computados como estoque sistêmico atual. Deseja finalizar assim mesmo?`
+        )
+      ) {
+        return;
+      }
+    } else {
+      if (!confirm("Tem certeza de que deseja finalizar esta contagem?")) return;
+    }
 
     setSaving(true);
     try {
-      // Save first to ensure latest data
       await countingService.updateCount(id, items, completedSubcategories);
       await countingService.finalizeCount(id);
-
       toast({
-        title: "Contagem finalizada!",
-        description: "Enviada para aprovação do gerente.",
+        title: "Contagem finalizada! 🎉",
+        description: "Os dados foram consolidados para análise administrativa.",
         variant: "success",
       });
       navigate("/contagem");
@@ -313,7 +313,7 @@ export default function CountingArea() {
       console.error("Error finalizing:", error);
       toast({
         title: "Erro ao finalizar",
-        description: "Verifique se todos os itens foram preenchidos.",
+        description: "Por favor, tente novamente.",
         variant: "destructive",
       });
     } finally {
@@ -321,291 +321,407 @@ export default function CountingArea() {
     }
   };
 
-  const advanceToNextUncompleted = (newCompleted: string[]) => {
-    for (const cat of CATEGORY_ORDER) {
-      const subcats = SUBCATEGORY_ORDER[cat] || [];
-      for (const subcat of subcats) {
-        if (!newCompleted.includes(subcat)) {
-          setActiveCategory(cat);
-          setActiveSubcategory(subcat);
-          return;
-        }
-      }
-    }
-  };
-
-  const handleCompleteSubcategory = () => {
-    if (!activeSubcategory) return;
-
-    let newCompleted = [...completedSubcategories];
-    if (!newCompleted.includes(activeSubcategory)) {
-      newCompleted.push(activeSubcategory);
-      setCompletedSubcategories(newCompleted);
-    }
-
-    // Auto-save when completing
-    handleSave(true, newCompleted);
-
-    toast({
-      title: "Subcategoria concluída!",
-      description: `${activeSubcategory} marcada como conferida.`,
-      variant: "success"
-    });
-
-    advanceToNextUncompleted(newCompleted);
-  };
-
-  // Resolve subcategories map
+  // Resolve subcategory names
   const subcatMap = Object.fromEntries(subcategories.map(s => [s.id, s.name]));
-
-  // For each product, resolve the exact subcategory name it belongs to
   const getProductSubcategory = (p: Product): string =>
     (p.subcategory_id && subcatMap[p.subcategory_id]) || p.category || "Sem categoria";
 
-  const filteredItems = items.filter((item) => {
+  const getSubcategoryProgress = (subcatName: string) => {
+    const subcatProducts = products.filter(p => getProductSubcategory(p) === subcatName);
+    const total = subcatProducts.length;
+    const counted = subcatProducts.filter(p => localInputs[p.id] !== "" && localInputs[p.id] !== undefined).length;
+    return { counted, total };
+  };
+
+  const getCategoryProgress = (catName: string) => {
+    const subcats = SUBCATEGORY_ORDER[catName] || [];
+    const catProducts = products.filter(p => subcats.includes(getProductSubcategory(p)));
+    const total = catProducts.length;
+    const counted = catProducts.filter(p => localInputs[p.id] !== "" && localInputs[p.id] !== undefined).length;
+    return { counted, total };
+  };
+
+  // Filter items for the active Category view
+  const subcats = SUBCATEGORY_ORDER[activeCategory] || [];
+  const allFilteredItems = items.filter((item) => {
     const product = products.find((p) => p.id === item.product_id);
     if (!product) return false;
 
+    // Search query matching
     const matchesSearch =
       product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (product.barcode && product.barcode.includes(searchTerm));
+      (product.barcode && product.barcode.includes(searchTerm)) ||
+      (product.code !== undefined && product.code.toString().includes(searchTerm));
 
+    // Category matching (belongs to active category's subcategories)
     const productSubcat = getProductSubcategory(product);
-    const matchesCategory = productSubcat === activeSubcategory;
+    const matchesCategory = subcats.includes(productSubcat);
 
-    return matchesSearch && matchesCategory;
+    // Filter uncounted/pending logic
+    const isPending = localInputs[item.product_id] === "" || localInputs[item.product_id] === undefined;
+    const matchesPending = !showOnlyPending || isPending;
+
+    return matchesSearch && matchesCategory && matchesPending;
   });
 
-  if (loading)
-    return <div className="p-8 text-center">Carregando contagem...</div>;
+  // Calculate overall uncounted count globally
+  const globalUncountedCount = items.filter(
+    (item) => localInputs[item.product_id] === "" || localInputs[item.product_id] === undefined
+  ).length;
 
-  const isCurrentSubcategoryCompleted = completedSubcategories.includes(activeSubcategory);
+  const totalItems = items.length;
+  const countedItems = totalItems - globalUncountedCount;
+  const globalProgress = totalItems > 0 ? (countedItems / totalItems) * 100 : 0;
+
+  // Barcode scanner integration: auto focus and select
+  useEffect(() => {
+    if (!searchTerm) return;
+
+    const matches = allFilteredItems.filter((item) => {
+      const product = products.find((p) => p.id === item.product_id);
+      return product && product.barcode === searchTerm.trim();
+    });
+
+    if (matches.length === 1) {
+      const matchedItem = matches[0];
+      setTimeout(() => {
+        const input = document.getElementById(`input-${matchedItem.product_id}`) as HTMLInputElement;
+        if (input) {
+          input.focus();
+          input.select();
+        }
+        setSearchTerm(""); // clear query
+        toast({
+          title: "Produto Escaneado 🏷️",
+          description: products.find(p => p.id === matchedItem.product_id)?.name || "Produto focado",
+          variant: "success",
+        });
+      }, 100);
+    }
+  }, [searchTerm, allFilteredItems, products, toast]);
+
+  if (loading)
+    return (
+      <div className="p-8 text-center flex flex-col items-center justify-center min-h-[50vh] gap-3 text-ink-muted">
+        <Loader2 className="h-8 w-8 animate-spin text-ink" />
+        <span>Carregando área de contagem...</span>
+      </div>
+    );
 
   return (
-    <div className="space-y-6 pb-24">
-      <div className="flex flex-col gap-4 bg-white p-4 -mx-4 -mt-4 shadow-sm sm:mx-0 sm:mt-0 sm:rounded-lg sm:p-6 sticky top-0 z-10 border-b border-gray-100">
-        <div className="flex items-center justify-between">
-          <Link to="/contagem" className="text-gray-500 hover:text-brand-brown">
-            <ArrowLeft className="h-6 w-6" />
-          </Link>
-          <div className="text-center">
-            {/* The Dashboard already formats Contagem #{id}, but we will also show it here briefly */}
-            <div className="text-sm text-gray-500">
-              Contagem
-              {count?.created_at ? ` - ${new Date(count.created_at).toLocaleDateString()}` : ""}
-              {storeName && ` - ${storeName}`}
+    <div className="space-y-6 pb-28 relative font-sans">
+      {/* Sticky Premium Header Container */}
+      <div className="sticky top-0 z-20 flex flex-col gap-4 bg-bg border-b border-rule-soft pb-4 pt-1 -mx-4 px-4 sm:mx-0 sm:px-0 sm:pt-0">
+        
+        {/* Row 1: Back, Title, Auto-Save Status */}
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <Link to="/contagem" className="p-1.5 hover:bg-bg-hover rounded-lg text-ink transition-colors">
+              <ArrowLeft className="h-5 w-5" />
+            </Link>
+            <div>
+              <div className="text-[10px] uppercase font-bold tracking-wider text-ink-muted leading-tight">
+                {storeName || "Santo Favo"} · Contagem Física
+              </div>
+              <h1 className="font-serif text-lg text-ink font-semibold mt-0.5 leading-tight">
+                Ciclo #{id?.substring(0, 6)}
+              </h1>
             </div>
-            <div className="font-bold text-lg">#{id?.substring(0, 6)}</div>
           </div>
-          <div
-            className={cn(
-              "px-3 py-1 rounded-full text-xs font-medium",
-              count?.status === "draft"
-                ? "bg-gray-100 text-gray-700"
-                : "bg-yellow-100 text-yellow-800",
+
+          <div className="flex flex-col items-end gap-1 shrink-0 select-none">
+            <div className="px-2 py-0.5 border border-rule-soft rounded bg-bg-card text-[10px] font-bold uppercase tracking-wider text-ink-soft">
+              {count?.status === "draft" ? "Rascunho" : "Concluído"}
+            </div>
+            {autoSaveStatus !== "idle" && (
+              <span className="text-[9px] font-bold tracking-wider uppercase transition-all duration-300">
+                {autoSaveStatus === "saving" && (
+                  <span className="text-brand-marrom animate-pulse flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 bg-brand-marrom rounded-full animate-ping" />
+                    Salvando...
+                  </span>
+                )}
+                {autoSaveStatus === "saved" && (
+                  <span className="text-green-600 flex items-center gap-1">
+                    <Check className="h-3 w-3" />
+                    Salvo
+                  </span>
+                )}
+                {autoSaveStatus === "error" && (
+                  <span className="text-brand-rosa flex items-center gap-1">
+                    ⚠️ Erro ao salvar
+                  </span>
+                )}
+              </span>
             )}
-          >
-            {count?.status === "draft" ? "Rascunho" : "Em Análise"}
           </div>
         </div>
 
-        {/* Filters (Search and Category) */}
-        <div className="space-y-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+        {/* Row 2: Global Progress Bar */}
+        <div className="space-y-1">
+          <div className="flex justify-between items-baseline text-[10px] font-bold uppercase tracking-wider text-ink-muted">
+            <span>Progresso Geral do Ciclo</span>
+            <span className="text-ink font-bold leading-none">
+              {countedItems} de {totalItems} contados ({globalProgress.toFixed(0)}%)
+            </span>
+          </div>
+          <div className="w-full bg-bg-soft rounded-full h-2.5 overflow-hidden border border-rule-soft p-[1px]">
+            <div
+              className="bg-brand-marrom-escuro h-full rounded-full transition-all duration-300"
+              style={{ width: `${globalProgress}%` }}
+            />
+          </div>
+        </div>
+
+        {/* Row 3: Filters (Search Box + "Não contados (N)" toggle) */}
+        <div className="flex flex-col sm:flex-row gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-ink-muted" />
             <Input
-              placeholder="Buscar por nome ou código de barras..."
-              className="pl-9 bg-gray-50 border-gray-200"
+              placeholder="Pesquise por nome, código ou bipa o código de barras..."
+              className="pl-9 h-9 text-xs"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-
-          <div className="space-y-3">
-            {/* Top Tier: Categories */}
-            <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar scroll-smooth">
-              {CATEGORY_ORDER.map((cat) => {
-                const isActive = activeCategory === cat;
-                const subcats = SUBCATEGORY_ORDER[cat] || [];
-                // A category is visually "completed" if all its subcategories are completed
-                const isCompleted = subcats.length > 0 && subcats.every(sub => completedSubcategories.includes(sub));
-
-                return (
-                  <button
-                    key={cat}
-                    onClick={() => {
-                      setActiveCategory(cat);
-                      if (SUBCATEGORY_ORDER[cat]?.length > 0) {
-                        setActiveSubcategory(SUBCATEGORY_ORDER[cat][0]);
-                      }
-                    }}
-                    className={cn(
-                      "px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors flex items-center gap-2 border",
-                      isActive
-                        ? "bg-slate-800 text-white border-slate-800 shadow-md"
-                        : isCompleted
-                          ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                          : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
-                    )}
-                  >
-                    {isCompleted && <Check className="h-4 w-4 text-emerald-500" />}
-                    {cat}
-                  </button>
-                )
-              })}
-            </div>
-
-            {/* Second Tier: Subcategories */}
-            {activeCategory && SUBCATEGORY_ORDER[activeCategory] && (
-              <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar scroll-smooth">
-                {SUBCATEGORY_ORDER[activeCategory].map((subcat) => {
-                  const isActive = activeSubcategory === subcat;
-                  const isCompleted = completedSubcategories.includes(subcat);
-
-                  return (
-                    <button
-                      key={subcat}
-                      onClick={() => setActiveSubcategory(subcat)}
-                      className={cn(
-                        "px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-colors flex items-center gap-1.5 border border-transparent",
-                        getTabColor(activeCategory, isActive, isCompleted)
-                      )}
-                    >
-                      {isCompleted && <Check className="h-3 w-3" />}
-                      {subcat}
-                    </button>
-                  )
-                })}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Control for Subcategory Completion */}
-      <div className="flex justify-between items-center bg-blue-50 p-4 rounded-xl border border-blue-100">
-        <div>
-          <h3 className="font-semibold text-blue-900">
-            {isCurrentSubcategoryCompleted ? "Subcategoria conferida" : `Conferindo: ${activeSubcategory}`}
-          </h3>
-          <p className="text-sm text-blue-700 mt-1">
-            {isCurrentSubcategoryCompleted
-              ? "Você já marcou essa subcategoria como concluída, mas pode ajustar se precisar."
-              : `Contém ${filteredItems.length} itens para serem verificados.`}
-          </p>
-        </div>
-        {!isCurrentSubcategoryCompleted && (
-          <Button onClick={handleCompleteSubcategory} size="sm" className="hidden sm:flex bg-white hover:bg-red-50 text-red-600 border border-red-300 font-semibold shrink-0">
-            <Check className="h-4 w-4 mr-2" />
-            Concluir Subcategoria
+          
+          <Button
+            variant={showOnlyPending ? "primary" : "outline"}
+            onClick={() => setShowOnlyPending(!showOnlyPending)}
+            className="h-9 text-xs font-semibold shrink-0"
+          >
+            {showOnlyPending ? "Ver Todos" : `Não contados (${globalUncountedCount})`}
           </Button>
-        )}
+        </div>
+
+        {/* Row 4: Top Tier Category scroll controls */}
+        <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar scroll-smooth">
+          {CATEGORY_ORDER.map((cat) => {
+            const isActive = activeCategory === cat;
+            const subcats = SUBCATEGORY_ORDER[cat] || [];
+            const isCompleted = subcats.length > 0 && subcats.every(sub => completedSubcategories.includes(sub));
+            const { counted, total } = getCategoryProgress(cat);
+
+            return (
+              <button
+                key={cat}
+                type="button"
+                onClick={() => {
+                  setActiveCategory(cat);
+                }}
+                className={cn(
+                  "px-3 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wider whitespace-nowrap transition-colors flex items-center gap-1.5 border select-none",
+                  isActive
+                    ? "bg-ink text-bg border-ink font-bold"
+                    : isCompleted
+                      ? "bg-green-50 text-green-700 border-green-200"
+                      : "bg-bg-card text-ink-soft border-rule-soft hover:bg-bg-hover"
+                )}
+              >
+                {isCompleted && <Check className="h-3.5 w-3.5 text-green-600" />}
+                <span>{cat}</span>
+                {total > 0 && !isCompleted && (
+                  <span className={cn(
+                    "text-[10px] font-bold px-1.5 py-0.2 rounded-full",
+                    isActive ? "bg-bg-soft text-ink" : "bg-bg-soft text-ink-soft"
+                  )}>
+                    {counted}/{total}
+                  </span>
+                )}
+              </button>
+            )
+          })}
+        </div>
       </div>
 
-      {/* Items List */}
-      <div className="grid grid-cols-1 gap-4">
-        {filteredItems.map((item, index) => {
-          const product = products.find((p) => p.id === item.product_id);
-          if (!product) return null;
+      {/* Items List (Continuous scroll grouped by subcategory) */}
+      <div className="space-y-8 mt-2">
+        {subcats.map((subcat) => {
+          const subcatItems = allFilteredItems.filter((item) => {
+            const product = products.find((p) => p.id === item.product_id);
+            return product && getProductSubcategory(product) === subcat;
+          });
+
+          if (subcatItems.length === 0) return null;
+
+          const isCompleted = completedSubcategories.includes(subcat);
+          const { counted, total } = getSubcategoryProgress(subcat);
 
           return (
-            <Card
-              key={item.product_id}
-              className="p-4 flex items-center gap-4 cursor-pointer hover:bg-gray-50 transition-colors"
-              onClick={() => {
-                const input = document.querySelector(`input[data-index="${index}"]`) as HTMLInputElement;
-                if (input) input.focus();
-              }}
-            >
-              <div className="h-12 w-12 bg-gray-100 rounded-md flex items-center justify-center shrink-0 font-bold text-gray-400 text-lg">
-                {product.name.charAt(0)}
-              </div>
-              <div className="flex-1 min-w-0 py-1">
-                <div className="font-medium text-gray-900 leading-tight pr-2">
-                  {product.name}
+            <div key={subcat} className="space-y-3">
+              {/* Sticky Subcategory Header Divider */}
+              <div className="sticky top-[215px] sm:top-[175px] z-10 bg-bg py-2.5 border-b border-rule flex justify-between items-baseline select-none">
+                <h3 className="font-serif font-medium text-base text-ink tracking-tight">
+                  {subcat}
+                </h3>
+                <div className="flex items-center gap-3">
+                  <span className="text-[10px] font-bold tracking-wider text-ink-muted uppercase">
+                    {counted} / {total} contados
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => toggleSubcategoryCompleted(subcat)}
+                    className={cn(
+                      "text-[10px] font-bold px-2 py-0.5 rounded border transition-colors cursor-pointer leading-tight",
+                      isCompleted
+                        ? "bg-green-50 text-green-700 border-green-200 hover:bg-green-100"
+                        : "bg-transparent text-ink-muted border border-rule-soft hover:bg-bg-hover hover:text-ink"
+                    )}
+                  >
+                    {isCompleted ? "✓ Conferido" : "Marcar Conferido"}
+                  </button>
                 </div>
-                <div className="text-sm text-gray-500 mt-1">
-                  {product.unit} {product.code !== undefined ? `- Cód: ${product.code}` : ""}
-                </div>
-                <button
-                  className={cn(
-                    "mt-1.5 flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full border transition-colors",
-                    localToBuy[item.product_id]
-                      ? "bg-orange-100 text-orange-700 border-orange-300"
-                      : "bg-gray-50 text-gray-400 border-gray-200 hover:border-orange-200 hover:text-orange-500"
-                  )}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleToBuyChange(item.product_id, !localToBuy[item.product_id]);
-                  }}
-                >
-                  <ShoppingCart className="h-3 w-3" />
-                  Comprar
-                </button>
               </div>
-              <div className="w-24 shrink-0" onClick={(e) => e.stopPropagation()}>
-                <Input
-                  type="number"
-                  inputMode="decimal"
-                  className="text-center font-lg h-12"
-                  placeholder="0"
-                  data-index={index}
-                  value={localInputs[item.product_id] ?? ""}
-                  onChange={(e) =>
-                    handleQuantityChange(item.product_id, e.target.value)
-                  }
-                  onFocus={(e) => {
-                    e.target.select();
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      const nextInput = document.querySelector(`input[data-index="${index + 1}"]`) as HTMLInputElement;
-                      if (nextInput) {
-                        nextInput.focus();
-                      } else {
-                        // We are at the end, suggest completing category maybe?
-                      }
-                    }
-                  }}
-                />
+
+              {/* Grid of Items */}
+              <div className="grid grid-cols-1 gap-3">
+                {subcatItems.map((item) => {
+                  const product = products.find((p) => p.id === item.product_id);
+                  if (!product) return null;
+
+                  const isCounted = localInputs[item.product_id] !== "" && localInputs[item.product_id] !== undefined;
+
+                  return (
+                    <Card
+                      key={item.product_id}
+                      className={cn(
+                        "p-4 flex items-center justify-between gap-4 cursor-pointer transition-all duration-200 border",
+                        isCounted
+                          ? "border-rule-soft bg-bg-card opacity-100"
+                          : "border-rule border-dashed bg-bg-soft/30 opacity-60 hover:opacity-85",
+                        focusedProductId === item.product_id && "border-ink bg-bg-hover/10"
+                      )}
+                      onClick={() => {
+                        const input = document.getElementById(`input-${item.product_id}`) as HTMLInputElement;
+                        if (input) input.focus();
+                      }}
+                    >
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-baseline gap-2">
+                          <span className={cn(
+                            "font-sans font-medium text-base text-ink leading-tight",
+                            isCounted ? "" : "text-ink-soft"
+                          )}>
+                            {product.name}
+                          </span>
+                          {isCounted && (
+                            <span className="text-green-600 font-bold text-xs shrink-0 select-none">✓</span>
+                          )}
+                        </div>
+                        
+                        <div className="flex items-center gap-2 mt-1 flex-wrap">
+                          <span className="text-xs text-ink-muted font-medium">
+                            {product.unit} {product.code !== undefined ? `· Cód: ${product.code}` : ""}
+                          </span>
+                          
+                          {/* Discretized Buy button as a tiny tag */}
+                          <button
+                            type="button"
+                            className={cn(
+                              "inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded transition-all cursor-pointer leading-tight",
+                              localToBuy[item.product_id]
+                                ? "bg-brand-rosa/20 text-brand-rosa border border-brand-rosa/30"
+                                : "bg-transparent text-ink-muted border border-rule-soft hover:border-brand-rosa/40 hover:text-brand-rosa"
+                            )}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleToBuyChange(item.product_id, !localToBuy[item.product_id]);
+                            }}
+                          >
+                            <ShoppingCart className="h-2.5 w-2.5 shrink-0" />
+                            {localToBuy[item.product_id] ? "Comprar ✓" : "Comprar"}
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Tactile Numeric Stepper Widget */}
+                      <div className="flex items-center rounded-lg border border-rule bg-bg overflow-hidden h-[42px] shrink-0" onClick={(e) => e.stopPropagation()}>
+                        <button
+                          type="button"
+                          className="w-[40px] h-[42px] bg-bg-soft hover:bg-bg-hover text-ink text-lg font-medium transition-colors border-r border-rule-soft flex items-center justify-center select-none cursor-pointer"
+                          onClick={() => {
+                            const currentVal = parseFloat(localInputs[item.product_id] || "0");
+                            const newVal = Math.max(0, currentVal - 1);
+                            handleQuantityChange(item.product_id, newVal.toString());
+                          }}
+                        >
+                          -
+                        </button>
+                        <input
+                          id={`input-${item.product_id}`}
+                          type="number"
+                          inputMode="decimal"
+                          placeholder="—"
+                          className="w-[60px] h-[42px] bg-transparent text-center text-sm font-medium text-ink focus:outline-none focus:ring-0 placeholder:text-ink-muted border-0"
+                          value={localInputs[item.product_id] ?? ""}
+                          onChange={(e) => handleQuantityChange(item.product_id, e.target.value)}
+                          onFocus={(e) => {
+                            e.target.select();
+                            setFocusedProductId(item.product_id);
+                          }}
+                          onBlur={() => setFocusedProductId(null)}
+                          onKeyDown={(e) => {
+                            const currentIndex = allFilteredItems.findIndex(fi => fi.product_id === item.product_id);
+                            if (e.key === 'Enter' || e.key === 'ArrowDown') {
+                              e.preventDefault();
+                              if (currentIndex < allFilteredItems.length - 1) {
+                                const nextId = allFilteredItems[currentIndex + 1].product_id;
+                                document.getElementById(`input-${nextId}`)?.focus();
+                              }
+                            } else if (e.key === 'ArrowUp') {
+                              e.preventDefault();
+                              if (currentIndex > 0) {
+                                const prevId = allFilteredItems[currentIndex - 1].product_id;
+                                document.getElementById(`input-${prevId}`)?.focus();
+                              }
+                            }
+                          }}
+                        />
+                        <button
+                          type="button"
+                          className="w-[40px] h-[42px] bg-bg-soft hover:bg-bg-hover text-ink text-lg font-medium transition-colors border-l border-rule-soft flex items-center justify-center select-none cursor-pointer"
+                          onClick={() => {
+                            const currentVal = parseFloat(localInputs[item.product_id] || "0");
+                            const newVal = currentVal + 1;
+                            handleQuantityChange(item.product_id, newVal.toString());
+                          }}
+                        >
+                          +
+                        </button>
+                      </div>
+                    </Card>
+                  );
+                })}
               </div>
-            </Card>
+            </div>
           );
         })}
-        {filteredItems.length === 0 && (
-          <div className="text-center py-12 text-gray-500">
-            Nenhum produto encontrado na subcategoria.
+
+        {allFilteredItems.length === 0 && (
+          <div className="text-center py-16 text-ink-muted font-medium bg-bg-card rounded-lg border border-rule-soft border-dashed">
+            Nenhum produto pendente de contagem nesta categoria.
           </div>
         )}
       </div>
 
-      {!isCurrentSubcategoryCompleted && filteredItems.length > 0 && (
-        <div className="flex justify-end mt-4 px-2">
-          <Button onClick={handleCompleteSubcategory} className="bg-white hover:bg-red-50 text-red-600 border border-red-300 font-semibold shadow-sm px-6">
-            Concluir Subcategoria
-          </Button>
-        </div>
-      )}
-
-      {/* Floating Action Bar (Save and Finalize) */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-200 flex gap-3 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] md:pl-64 z-20">
+      {/* Floating Action Bar (Save and Finalize) conforming to Spec (no shadow, rule border) */}
+      <div className="fixed bottom-0 left-0 right-0 p-4 bg-bg/95 backdrop-blur-md border-t border-rule-soft flex gap-3 md:pl-64 z-20 shadow-none">
         <Button
           className="flex-1"
           variant="outline"
           onClick={() => handleSave(false)}
           disabled={saving}
         >
-          <Save className="h-4 w-4 mr-2" />
+          <Save className="h-4 w-4 mr-2 shrink-0" />
           Salvar Rascunho
         </Button>
         <Button
-          className="flex-1 bg-green-600 hover:bg-green-700"
+          className="flex-1 bg-ink text-bg hover:bg-bg-soft hover:text-ink border border-ink font-semibold"
           onClick={handleFinalize}
           disabled={saving}
         >
-          <Send className="h-4 w-4 mr-2" />
-          Finalizar
+          <Send className="h-4 w-4 mr-2 shrink-0" />
+          Finalizar Contagem
         </Button>
       </div>
     </div>

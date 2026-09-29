@@ -42,18 +42,18 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <div className="w-full max-w-md space-y-8 bg-white p-8 rounded-lg shadow-md border border-gray-100">
+    <div className="min-h-screen flex items-center justify-center bg-bg px-4">
+      <div className="w-full max-w-md space-y-8 bg-bg-card p-8 rounded-lg border border-rule-soft">
         <div className="text-center">
-          <h2 className="text-3xl font-extrabold text-brand-brown">
+          <h2 className="font-serif font-medium text-3.5xl tracking-tight text-ink">
             Santo Favo
           </h2>
-          <p className="mt-2 text-sm text-gray-600">Controle de Estoque</p>
+          <p className="font-serif italic text-sm text-ink-soft mt-1">Controle de Estoque</p>
         </div>
 
         <form className="mt-8 space-y-6" onSubmit={handleLogin}>
           {error && (
-            <div className="bg-red-50 text-red-500 text-sm p-3 rounded-md text-center">
+            <div className="bg-brand-rosa/20 text-brand-marrom-escuro font-serif italic text-xs p-3 rounded-md text-center">
               {error}
             </div>
           )}
@@ -68,7 +68,7 @@ export default function Login() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="seu@email.com"
-                className="mt-1"
+                className="mt-1 bg-transparent"
               />
             </div>
 
@@ -80,14 +80,14 @@ export default function Login() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="mt-1"
+                className="mt-1 bg-transparent"
               />
             </div>
           </div>
 
           <Button
             type="submit"
-            className="w-full bg-brand-brown hover:bg-brand-brown/90"
+            className="w-full bg-ink text-bg hover:bg-ink-soft hover:text-bg"
             isLoading={loading}
           >
             Entrar

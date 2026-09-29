@@ -44,24 +44,22 @@ export default function ApprovalList() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-2">
-        <h1 className="text-2xl font-bold text-brand-brown">
+        <h1 className="font-serif font-medium text-2xl tracking-tight text-ink">
           Aprovação de Contagens
         </h1>
-        <p className="text-gray-500">
+        <p className="text-sm text-ink-muted">
           Revise e aprove as contagens finalizadas pelos colaboradores
         </p>
       </div>
 
       {loading ? (
-        <div className="text-center py-12 text-gray-500">Carregando...</div>
+        <div className="text-center py-12 text-ink-muted">Carregando...</div>
       ) : counts.length === 0 ? (
         <Card className="p-12 text-center flex flex-col items-center justify-center gap-4">
-          <div className="bg-green-100 p-4 rounded-full">
-            <CheckCircle className="h-8 w-8 text-green-600" />
-          </div>
+          <CheckCircle className="h-8 w-8 text-brand-verde" />
           <div className="space-y-1">
-            <h3 className="text-lg font-medium text-gray-900">Tudo em dia!</h3>
-            <p className="text-gray-500 max-w-sm mx-auto">
+            <h3 className="font-serif font-medium text-lg text-ink">Tudo em dia!</h3>
+            <p className="text-sm text-ink-muted max-w-sm mx-auto">
               Não há contagens pendentes de aprovação no momento.
             </p>
           </div>
@@ -76,20 +74,20 @@ export default function ApprovalList() {
           {counts.map((count) => (
             <Card
               key={count.id}
-              className="flex flex-col overflow-hidden hover:shadow-md transition-shadow"
+              className="flex flex-col overflow-hidden border border-rule-soft bg-bg-card"
             >
               <div className="p-6 flex-1 space-y-4">
                 <div className="flex justify-between items-start gap-2">
-                  <div className="bg-yellow-100 text-yellow-800 px-2.5 py-0.5 rounded-full text-xs font-medium flex items-center gap-1 shrink-0">
-                    <Clock className="h-3 w-3" />
+                  <div className="inline-flex items-center px-2 py-0.5 rounded-md border border-rule-soft bg-accent/20 text-brand-marrom-escuro text-xs font-medium gap-1 shrink-0">
+                    <Clock className="h-3 w-3 text-brand-marrom-escuro" />
                     Aguardando Análise
                   </div>
                   <div className="text-right">
-                    <div className="text-xs text-gray-500 font-mono">
+                    <div className="text-xs text-ink-muted font-mono">
                       #{count.id.substring(0, 6)}
                     </div>
                     {count.store_id && stores[count.store_id] && (
-                      <div className="text-xs font-medium text-gray-700 mt-1">
+                      <div className="text-xs font-medium text-ink-soft mt-1">
                         {stores[count.store_id]}
                       </div>
                     )}
@@ -97,11 +95,11 @@ export default function ApprovalList() {
                 </div>
 
                 <div>
-                  <div className="text-sm text-gray-500 mb-1">
+                  <div className="text-xs font-semibold uppercase tracking-wider text-ink-muted mb-1">
                     Data da Contagem
                   </div>
-                  <div className="font-medium flex items-center gap-2">
-                    <Calendar className="h-4 w-4 text-brand-brown" />
+                  <div className="font-medium text-ink flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-ink-soft" />
                     {format(
                       new Date(count.created_at),
                       "dd 'de' MMMM 'às' HH:mm",
@@ -111,19 +109,19 @@ export default function ApprovalList() {
                 </div>
 
                 <div>
-                  <div className="text-sm text-gray-500 mb-1">Resumo</div>
-                  <div className="text-2xl font-bold text-brand-brown">
+                  <div className="text-xs font-semibold uppercase tracking-wider text-ink-muted mb-1">Resumo</div>
+                  <div className="font-serif text-2xl font-semibold text-ink">
                     {count.items.length}{" "}
-                    <span className="text-sm font-normal text-gray-500">
+                    <span className="font-sans text-sm font-normal text-ink-muted ml-1">
                       itens contados
                     </span>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-gray-50 p-4 border-t border-gray-100">
+              <div className="bg-bg-soft p-4 border-t border-rule-soft">
                 <Link to={`/aprovacao/${count.id}`}>
-                  <Button className="w-full group">
+                  <Button className="w-full group bg-ink text-bg hover:bg-ink-soft hover:text-bg">
                     Revisar Contagem
                     <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
                   </Button>

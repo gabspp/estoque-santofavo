@@ -61,13 +61,20 @@ export default function CountingDashboard() {
       const storeName = count.store_id ? (stores[count.store_id] || "Loja") : "Geral";
       const products = await productService.getProducts();
 
+      const formatNum = (n: number) => String(n).replace(".", ",");
+      const sortedItems = [...count.items].sort((a, b) => {
+        const nameA = products.find((p) => p.id === a.product_id)?.name ?? "";
+        const nameB = products.find((p) => p.id === b.product_id)?.name ?? "";
+        return nameA.localeCompare(nameB, "pt-BR");
+      });
+
       const csvContent = [
-        ["Produto", "Quantidade Contada", "Quantidade Sistema", "Diferença"],
-        ...count.items.map((item) => {
+        ["Produto", "Quantidade Contada", "Quantidade Sistema", "Diferença"].join(";"),
+        ...sortedItems.map((item) => {
           const product = products.find((p) => p.id === item.product_id);
           const name = product ? product.name : "Produto Desconhecido";
           const diff = item.quantity_counted - item.quantity_system;
-          return `"${name}",${item.quantity_counted},${item.quantity_system},${diff}`;
+          return `"${name}";${formatNum(item.quantity_counted)};${formatNum(item.quantity_system)};${formatNum(diff)}`;
         }),
       ].join("\n");
 

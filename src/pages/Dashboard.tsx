@@ -9,28 +9,28 @@ export default function Dashboard() {
     <div className="space-y-8">
       {/* Welcome Section */}
       <div>
-        <h1 className="text-2xl font-bold text-brand-brown">
+        <h1 className="font-serif font-medium text-2xl tracking-tight text-ink">
           Olá, {userName.charAt(0).toUpperCase() + userName.slice(1)}
         </h1>
-        <p className="text-gray-500">
+        <p className="text-sm text-ink-muted">
           Bem-vindo ao painel de controle do Santo Favo.
         </p>
       </div>
 
       {/* Quick Actions */}
       <div>
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">
+        <h2 className="font-serif font-medium text-xl tracking-tight text-ink mb-4">
           Ações Rápidas
         </h2>
         <ActionButtons />
       </div>
 
       {/* Recent Activity Placeholder */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">
+      <div className="bg-bg-card border border-rule-soft rounded-lg p-6">
+        <h2 className="font-serif font-medium text-xl tracking-tight text-ink mb-4">
           Atividade Recente
         </h2>
-        <div className="text-center py-8 text-gray-500">
+        <div className="text-center py-8 text-ink-muted">
           <p>Nenhuma atividade recente para mostrar.</p>
         </div>
       </div>

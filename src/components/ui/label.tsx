@@ -13,7 +13,7 @@ const Label = forwardRef<
   <label
     ref={ref}
     className={cn(
-      "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
+      "text-xs font-semibold uppercase tracking-wider text-ink-muted leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 select-none",
       className,
     )}
     {...props}
